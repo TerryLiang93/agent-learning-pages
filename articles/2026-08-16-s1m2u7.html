@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>记忆：Agent 怎么&#x27;记住&#x27;东西</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段一：概念与原理（大白话版）</span>
+      <h1>记忆：Agent 怎么&#x27;记住&#x27;东西</h1>
+      <div class="meta">2026-08-16 · Agent 怎么工作 · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>老规矩，先花 30 秒回顾一下昨天为什么没学完——其实没关系，今天的内容本身不难，而且和昨天是连着的。昨天我们讲了 Agent 怎么“思考”（推理），今天讲它怎么“记住”。</p>
+<p>你可能已经发现一个奇怪的事：你跟 ChatGPT 或 DeepSeek 聊天，关掉页面再打开，它完全不记得你是谁。这不是它“高冷”，而是<strong>模型天生就没有记忆</strong>。就像一个人每次见面都失忆，你每次都得重新自我介绍。</p>
+<p>那 Agent 是怎么做到“记得你上周说过的话”的？靠的就是<strong>短期记忆</strong>和<strong>长期记忆</strong>这套机制。今天学完，你就能说清楚这两者的区别，并且知道长期记忆的一种具体实现方法。这是后面做 Agent 应用的基础——没有记忆的 Agent 就像金鱼，只能做一次性问答。</p>
+<hr>
+<h2>术语卡片</h2>
+<ul>
+<li><strong>短期记忆</strong> —— 就是模型“当前这次对话”里能看到的全部内容。相当于你手里拿着的便利贴，上面写着这次聊天的上下文。便利贴有大小限制，写满了就得扔旧的。</li>
+<li><strong>长期记忆</strong> —— 存在外部地方（文件、数据库）的信息，需要时再取出来塞进短期记忆里。相当于你的笔记本，可以记很多，用的时候翻出来看。</li>
+<li><strong>向量数据库</strong> —— 一种特殊数据库，存的不是表格数据，而是“意思”。它能根据语义找相似内容，而不是靠关键词精确匹配。相当于一个按“意思”分类整理的书架。</li>
+<li><strong>嵌入（Embedding）</strong> —— 把一段文字变成一串数字（向量），这串数字能代表这句话的“意思”。意思相近的句子，数字也相近。相当于给每句话做一个“指纹”，但指纹的相似度反映的是语义相似度。</li>
+</ul>
+<hr>
+<h2>原理精讲</h2>
+<h3>1. 模型本身没有记忆：每次对话都是“重新开始”</h3>
+<p>先做一个思想实验。你拿一张白纸，对着一张照片描述：“这个人穿红衣服。”然后把纸翻过去，再翻回来，问自己：我刚才说了什么？——你不知道，因为你没写下来。</p>
+<p>大语言模型就是这样。它每次收到你的提问，都是“第一次”见到你。它没有“上一次我们聊过什么”的概念。你问它“我上次让你帮我写的代码呢？”，它只会一脸茫然。</p>
+<p>所以，<strong>模型本身只是一个“计算器”</strong>，输入一段文字，输出一段文字，完事。记忆这件事，需要靠外部的机制来做。</p>
+<h3>2. 短期记忆 = 上下文窗口里的内容</h3>
+<p>那为什么你在同一个对话窗口里连续提问，它好像记得你前面说的？</p>
+<p>因为每次你发新消息时，系统会把<strong>之前的对话历史</strong>也一起发给模型。模型看到的不是“你刚说的这句话”，而是“从对话开始到现在所有的内容”。这些内容就是<strong>上下文窗口</strong>——也就是短期记忆。</p>
+<p>打个比方：你和一个失忆的朋友聊天，你随身带了一个小本子，每次说话前先把之前的对话念给他听。他听完本子上的内容，再回答你当前的问题。本子就是上下文窗口，能写多少字，就是窗口大小（比如 128K tokens）。</p>
+<p>问题来了：本子有限，聊太久就写不下了。这时要么丢掉最早的内容（相当于遗忘），要么把内容压缩成摘要（相当于提炼要点）。</p>
+<h3>3. 长期记忆 = 把信息存起来，需要时再取</h3>
+<p>短期记忆的问题很明显：一关对话就没了，而且容量有限。解决方法是——<strong>把重要的东西写进笔记本</strong>。</p>
+<p>这个笔记本可以是：</p>
+<ul>
+<li>一个普通的文本文件（最简单）</li>
+<li>一个 SQL 数据库（结构化）</li>
+<li>一个向量数据库（按语义检索）</li>
+</ul>
+<p>Agent 的工作流程是这样的：</p>
+<blockquote>用户说：“我的项目叫‘蓝鲸’，是一个物联网网关，用的芯片是 ESP32。”</blockquote>
+<p>Agent 判断这句话值得记住，于是写入长期记忆库（比如存进文件：“项目名称=蓝鲸，硬件=ESP32”）。</p>
+<p>下次用户说：“帮我看看蓝鲸项目的代码。” Agent 先去长期记忆里检索“蓝鲸”，找到相关记录，把“项目=蓝鲸，硬件=ESP32”塞进上下文窗口，然后再回答。</p>
+<p>你看，<strong>长期记忆的本质是“外部存储 + 检索”</strong>。模型本身没记住，但它会“查资料”。</p>
+<h3>4. 向量数据库为什么适合记忆：按“意思相近”检索</h3>
+<p>普通数据库有个问题：只能精确匹配。你存了“蓝鲸项目”，用户说“那个网关项目”，普通数据库就查不到——因为关键词对不上。</p>
+<p>向量数据库解决了这个问题。它靠<strong>嵌入</strong>把每段文字变成一串数字（比如 384 个数字组成的向量），然后计算向量之间的距离。意思相近的文字，向量距离就近。</p>
+<p>举例：</p>
+<ul>
+<li>“蓝鲸项目” → 向量 A</li>
+<li>“那个物联网网关项目” → 向量 B</li>
+<li>“今天天气不错” → 向量 C</li>
+</ul>
+<p>向量 A 和 B 的距离很近（语义相近），A 和 C 的距离很远（无关）。所以当你问“那个网关项目”时，向量数据库能检索出“蓝鲸项目”的记录。</p>
+<p>这就是为什么 Agent 的长期记忆大多用向量数据库——因为用户不会每次都说出精确的术语，但意思总能对上。</p>
+<p><strong>一句话总结</strong>：短期记忆是“现场能看到的”，长期记忆是“存起来需要时再找出来的”，向量数据库让你“按意思找”而不是“按字找”。</p>
+<hr>
+<h2>动手任务</h2>
+<h3>手机任务（5 分钟）</h3>
+<p>打开任何一个 AI 聊天 App（DeepSeek、ChatGPT 都行），做一个对比实验：</p>
+<ol>
+<li>新建一个对话，输入：“我叫张三，我喜欢吃重庆火锅。”</li>
+<li>同一对话里继续问：“我叫什么名字？” → 它能答出来（短期记忆在工作）</li>
+<li>关掉这个对话，新建一个对话，问：“我叫什么名字？” → 它答不出来（模型本身没有记忆）</li>
+<li>想一想：如果想让“新对话”也知道你叫张三，你会怎么做？（提示：把这句话放进系统提示词或开场白里）</li>
+</ol>
+<p>这个实验能让你直观感受到“短期记忆”和“没有记忆”的区别。</p>
+<h3>电脑任务（5 分钟，可选）</h3>
+<p>如果你电脑上有 Python 环境，可以体验一下向量检索的感觉：</p>
+<pre><code>pip install chromadb</code></pre>
+<p>然后运行以下脚本：</p>
+<pre><code>import chromadb
+
+client = chromadb.Client()
+collection = client.create_collection(&quot;demo&quot;)
+
+# 存入两条记忆
+collection.add(
+    documents=[&quot;蓝鲸项目是物联网网关，用ESP32&quot;, &quot;今天天气不错&quot;],
+    ids=[&quot;mem1&quot;, &quot;mem2&quot;]
+)
+
+# 检索“那个网关项目”
+results = collection.query(query_texts=[&quot;那个网关项目&quot;], n_results=1)
+print(results[&quot;documents&quot;])  # 应该返回“蓝鲸项目”那条</code></pre>
+<p>不用理解每一行代码，看结果就行：你用“那个网关项目”去搜，返回的是“蓝鲸项目”那条记录——这就是按意思检索。</p>
+<hr>
+<h2>今日动态</h2>
+<p>今天没有特别相关的动态。</p>
+<p>（说明：今天的 GitHub/HN 动态集中在 GPU 集群、手势控制、AI 身份验证等方向，与“记忆机制”主题相关性较弱，不硬凑。）</p>
+<hr>
+<h2>打卡</h2>
+<p>今天完成的标准是：<strong>能区分短期记忆和长期记忆，并说出长期记忆的一种实现思路</strong>。</p>
+<p>自测一下：</p>
+<ul>
+<li>短期记忆是什么？（答：上下文窗口里的内容，对话结束就没了）</li>
+<li>长期记忆是什么？（答：存在外部存储里，需要时检索出来塞进上下文）</li>
+<li>长期记忆的一种实现方式？（答：向量数据库 + 嵌入，按语义检索）</li>
+</ul>
+<p>能答上来，今天就算过关。明天我们继续讲 Agent 的“工具调用”——它怎么用螺丝刀和扳手。</p>
+<hr>
+<h2>本周回顾</h2>
+<p>过去 7 天，我们从零开始走过了 Agent 工作原理的核心部分：</p>
+<table><thead><tr><th>天</th><th>主题</th><th>核心收获</th></tr></thead><tbody>
+<tr><td>第 8 天</td><td>Agent 是什么</td><td>Agent = 模型 + 记忆 + 工具 + 规划，四件套</td></tr>
+<tr><td>第 9 天</td><td>Prompt 与指令</td><td>模型靠提示词驱动，好的指令 = 明确 + 具体</td></tr>
+<tr><td>第 10 天</td><td>推理与思考链</td><td>让模型“一步一步想”能显著提高准确率</td></tr>
+<tr><td>第 11 天</td><td>工具调用（上）</td><td>Agent 能调用外部工具，本质是“函数调用”</td></tr>
+<tr><td>第 12 天</td><td>工具调用（下）</td><td>工具调用的流程：生成参数 → 执行 → 返回结果</td></tr>
+<tr><td>第 13 天</td><td>规划与任务分解</td><td>Agent 把大目标拆成小步骤，逐步执行</td></tr>
+<tr><td>第 14 天</td><td>推理进阶</td><td>反思、自我纠错，让 Agent 更可靠</td></tr>
+<tr><td>第 15 天</td><td>记忆机制</td><td>短期记忆 vs 长期记忆，向量数据库按意思检索</td></tr>
+</tbody></table>
+<p>这周的关键认知：<strong>Agent 不是“一个聪明的模型”，而是“一个会用工具、有记忆、会规划的模型”</strong>。模型本身只是大脑，其他能力都是外面套上去的。</p>
+<p>本周动态方面，最值得关注的是 Hacker News 上“Why AI agents need verified identity”（AI Agent 为什么需要身份验证）。这暗示了 Agent 正在走向真实业务场景——当 Agent 能代表</p>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s1m2u7%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s1m2u7%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E8%AE%B0%E5%BF%86%EF%BC%9AAgent%20%E6%80%8E%E4%B9%88%27%E8%AE%B0%E4%BD%8F%27%E4%B8%9C%E8%A5%BF&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
