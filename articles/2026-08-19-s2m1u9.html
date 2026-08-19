@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Python 与 API：第一次调用大模型</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段二：动手搭建</span>
+      <h1>Python 与 API：第一次调用大模型</h1>
+      <div class="meta">2026-08-19 · 环境准备 · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>昨天咱们已经把这个单元推给你了，但你没来得及做。没关系，今天咱们换个更顺的思路，把这件事彻底拿下。</p>
+<p>今天要干的事就一件：<strong>让你的电脑开口跟大模型说话，并且听到它回话</strong>。</p>
+<p>打个比方，你现在就像一个刚拿到对讲机的人，今天要学的就是<strong>怎么按PTT键、怎么说话、怎么听到对方回复</strong>。至于对讲机里面是什么电路、什么芯片，咱们不碰，那是以后的事。</p>
+<p>为什么这件事重要？因为<strong>从今天开始，你就不再是&quot;看别人玩AI&quot;的人了，而是&quot;自己动手调AI&quot;的人了</strong>。哪怕只是让模型回一句&quot;你好&quot;，这一步跨过去，后面所有东西——写自动化脚本、做自己的AI工具、甚至搭智能体——都有了地基。</p>
+<p>咱们今天分四步走：</p>
+<ol>
+<li>装好Python（相当于给电脑装上&quot;能听懂人话的耳朵&quot;）</li>
+<li>搞明白API Key是什么、怎么藏好（相当于对讲机的频道密码）</li>
+<li>写第一段代码，让模型回话（相当于第一次按下PTT键）</li>
+<li>看懂返回的东西长什么样（相当于听懂对方在说什么）</li>
+</ol>
+<p>别怕，每一步我都会拆到最细。你照着做就行。</p>
+<hr>
+<h2>术语卡片</h2>
+<p><strong>API</strong> —— 就是&quot;一个约定的接口&quot;。好比餐厅的菜单：你不用进厨房，只要照着菜单点菜，厨房就会按规矩把菜做出来给你。API就是那个&quot;菜单&quot;，你按格式发请求，服务器按格式回结果。</p>
+<p><strong>API Key</strong> —— 就是&quot;你的身份凭证&quot;。好比小区门禁卡，刷卡才能进。API Key是一串字符串，贴在请求里，服务器一看就知道&quot;哦，这是合法用户，放行&quot;。</p>
+<p><strong>SDK</strong> —— 就是&quot;别人帮你写好的工具包&quot;。好比买家具附带的六角扳手，你不用自己找工具，直接用这个扳手就能组装。SDK就是官方提供的Python工具包，帮你省去手写底层请求的麻烦。</p>
+<p><strong>HTTP</strong> —— 就是&quot;互联网上沟通的规矩&quot;。好比写信的格式：要有收件人地址、要有正文、要有落款。HTTP规定了请求和响应的格式，所有网络通信都按这个规矩来。</p>
+<hr>
+<h2>原理精讲</h2>
+<h3>1. 整个流程长什么样</h3>
+<p>先给你一张全景图，心里有个数：</p>
+<pre><code>你的电脑 (Python)  --HTTP请求--&gt;  大模型服务器 (OpenAI/其他)  
+你的电脑 (Python)  &lt;--HTTP响应--  大模型服务器</code></pre>
+<p>就这么简单。你的电脑发一条消息过去，服务器算一会儿，把结果发回来。</p>
+<p>但这里有个关键问题：<strong>服务器怎么知道你是谁？</strong> 这就要靠API Key了。</p>
+<h3>2. API Key 到底怎么用</h3>
+<p>想象你去银行办业务。柜员问：&quot;您好，请出示身份证。&quot; 你递过去，柜员核对完，开始办业务。</p>
+<p>API Key就是你的&quot;身份证&quot;。每次发请求，你都要把API Key带上，服务器核对无误后才给你干活。</p>
+<p><strong>安全保存</strong>是重点中的重点。因为API Key是花钱的——每次调用都按量计费。如果泄露了，别人就能用你的额度，月底账单吓死你。</p>
+<p>保存方法：<strong>不要硬编码在代码里</strong>，而是放在环境变量里。</p>
+<p>环境变量【术语】就是&quot;操作系统里存的全局变量&quot;，任何程序都能读。好比你家大门后面挂了一块白板，上面写着WiFi密码，家里任何人要用都能看，但外人进不来。</p>
+<p>具体操作（Windows）：</p>
+<ul>
+<li>按 <code>Win</code> 键，输入&quot;环境变量&quot;，回车</li>
+<li>点&quot;环境变量&quot;按钮</li>
+<li>在&quot;用户变量&quot;里点&quot;新建&quot;</li>
+<li>变量名填 <code>OPENAI_API_KEY</code>，变量值填你的Key</li>
+<li>确定，关掉所有窗口</li>
+</ul>
+<p>这样你的Python代码就能通过 <code>os.getenv(&quot;OPENAI_API_KEY&quot;)</code> 读到它，而代码里不出现明文Key。</p>
+<h3>3. HTTP请求到底是什么</h3>
+<p>咱们刚才说了HTTP是&quot;规矩&quot;。具体到今天的场景，你发出去的请求长这样（简化版）：</p>
+<pre><code>POST https://api.openai.com/v1/chat/completions
+Headers: 
+  Authorization: Bearer sk-xxxxx
+  Content-Type: application/json
+Body:
+  {
+    &quot;model&quot;: &quot;gpt-4o-mini&quot;,
+    &quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;你好&quot;}]
+  }</code></pre>
+<p>翻译成人话：</p>
+<ul>
+<li><strong>POST</strong>：我要提交东西（不是拿东西，GET才是拿）</li>
+<li><strong>URL</strong>：我要送到哪个地址（大模型服务器的门牌号）</li>
+<li><strong>Headers</strong>：信封上的附加信息（你是谁、你发的是什么格式）</li>
+<li><strong>Body</strong>：信的正文（你要问的话）</li>
+</ul>
+<p>服务器返回的响应长这样（简化版）：</p>
+<pre><code>{
+  &quot;choices&quot;: [
+    {
+      &quot;message&quot;: {
+        &quot;role&quot;: &quot;assistant&quot;,
+        &quot;content&quot;: &quot;你好！有什么可以帮你的吗？&quot;
+      }
+    }
+  ]
+}</code></pre>
+<p><code>choices</code> 就是一个列表，里面装着模型的回复。<code>content</code> 字段就是那句人话。</p>
+<h3>4. 用SDK还是直接发HTTP？</h3>
+<p>两种方式都能实现。但咱们用SDK，因为<strong>省事</strong>。SDK相当于把上面那些HTTP细节都封装好了，你只需要写：</p>
+<pre><code>response = client.chat.completions.create(
+    model=&quot;gpt-4o-mini&quot;,
+    messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;你好&quot;}]
+)
+print(response.choices[0].message.content)</code></pre>
+<p>就这么简单。SDK内部帮你自动处理了HTTP请求、Headers、JSON解析这些脏活累活。</p>
+<hr>
+<h2>动手任务</h2>
+<h3>手机任务（5分钟）</h3>
+<p>打开手机备忘录，回答这三个问题：</p>
+<ol>
+<li>你的电脑上现在装了Python吗？（打开命令行，输入 <code>python --version</code>，看有没有输出）</li>
+<li>你有没有任何一个大模型平台的账号？（OpenAI、通义千问、文心一言、智谱都行）</li>
+<li>如果你两个都没有——那你今天的第一步是去注册一个平台账号（推荐智谱AI，国内访问快，注册送额度）。</li>
+</ol>
+<p>把答案写下来，这是你今天的起点。</p>
+<h3>电脑任务（10分钟）</h3>
+<blockquote>前提：假设你已经有OpenAI账号（或者兼容OpenAI接口的平台，比如智谱、DeepSeek等）。如果没有，先去平台注册并创建一个API Key。</blockquote>
+<p><strong>第1步：安装Python</strong></p>
+<ol>
+<li>打开浏览器，访问 https://www.python.org/downloads/</li>
+<li>点击黄色的&quot;Download Python 3.12.x&quot;按钮</li>
+<li>下载完后双击安装包</li>
+<li><strong>重要</strong>：勾选&quot;Add Python to PATH&quot;（这步不勾后面会哭）</li>
+<li>点&quot;Install Now&quot;，等它装完</li>
+</ol>
+<p>验证：打开命令行（<code>Win + R</code>，输入<code>cmd</code>回车），输入：</p>
+<pre><code>python --version</code></pre>
+<p>看到 <code>Python 3.12.x</code> 就说明装好了。</p>
+<p><strong>第2步：安装OpenAI SDK</strong></p>
+<p>命令行里输入：</p>
+<pre><code>pip install openai</code></pre>
+<p>看到 <code>Successfully installed openai-xxx</code> 就说明装好了。</p>
+<p><strong>第3步：设置环境变量</strong></p>
+<p>按前面的方法，把API Key存到环境变量 <code>OPENAI_API_KEY</code> 里。</p>
+<p><strong>第4步：写代码</strong></p>
+<p>在桌面新建一个文件夹 <code>ai_learning</code>，在里面新建文件 <code>first_call.py</code>，用记事本打开，粘贴以下内容：</p>
+<pre><code>import os
+from openai import OpenAI
+
+# 从环境变量读取API Key
+client = OpenAI(
+    api_key=os.getenv(&quot;OPENAI_API_KEY&quot;)
+)
+
+# 发第一次请求
+response = client.chat.completions.create(
+    model=&quot;gpt-4o-mini&quot;,  # 如果你用的是其他平台，改成对应的模型名
+    messages=[
+        {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;你好，请用一句话介绍你自己&quot;}
+    ]
+)
+
+# 打印模型的回复
+print(&quot;模型的回复：&quot;, response.choices[0].message.content)</code></pre>
+<p><strong>第5步：运行</strong></p>
+<p>命令行里进入那个文件夹：</p>
+<pre><code>cd Desktop\ai_learning
+python first_call.py</code></pre>
+<p>看到类似输出：</p>
+<pre><code>模型的回复： 你好！我是AI助手，可以帮你解答问题、提供建议、处理信息……</code></pre>
+<p>恭喜，你跑通了！</p>
+<p><strong>如果报错</strong>，最常见的两个：</p>
+<ul>
+<li><code>ModuleNotFoundError: No module named &#x27;openai&#x27;</code> → 说明SDK没装好，重新执行第2步</li>
+<li><code>AuthenticationError</code> → 说明API Key没配对，检查环境变量是否设置正确</li>
+</ul>
+<hr>
+<h2>今日动态</h2>
+<p>今天跟咱们主题最相关的是一条Hacker News讨论：</p>
+<p><strong><a href="https://news.ycombinator.com/item?id=49354254" target="_blank" rel="noopener">Ask HN: How should I price an AI infrastructure platform?</a></strong> —— 有人问&quot;AI基础设施平台该怎么定价&quot;。为什么值得关注？因为你今天刚学会调用API，就会明白这个问题的分量：API Key背后是计费体系，每一次调用都在烧钱。了解定价模式，能帮你以后选平台时不被坑。</p>
+<p>另外两条也顺带提一下：</p>
+<ul>
+<li><a href="https://techstrong.ai/articles/google-moves-a2a-under-agentic-ai-foundation/" target="_blank" rel="noopener">Google Moves A2A Under Agentic AI Foundation</a> —— A2A是</li>
+</ul>
+    <hr>
+<p>✅ 理论卡已打卡</p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m1u9%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9APython%20%E4%B8%8E%20API%EF%BC%9A%E7%AC%AC%E4%B8%80%E6%AC%A1%E8%B0%83%E7%94%A8%E5%A4%A7%E6%A8%A1%E5%9E%8B&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
