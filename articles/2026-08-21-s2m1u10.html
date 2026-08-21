@@ -40,106 +40,104 @@ hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
       <div class="meta">2026-08-21 · 环境准备 · 预计 30 分钟</div>
     </div>
     <h2>今日要点</h2>
-<p>今天咱们干一件特别有成就感的事：<strong>自己写一个能连续聊天的程序</strong>。你可能会想，聊天谁不会？但关键是搞明白——为什么AI能记住你上一句说了啥？其实原理简单得吓人：<strong>每次对话，把之前说过的话全部打包再发给AI一次</strong>。今天你就亲手实现它，顺便看看&quot;记性太好&quot;会带来什么代价（钱和速度）。</p>
+<p>昨天我们讲了消息列表，今天要把它真正用起来。你会写一个命令行小程序，让 AI 记住你说过的话，实现连续对话。核心就一句话：<strong>多轮对话不是 AI 记性好，而是我们把聊天记录每次一起发给它</strong>。学完这个，你就明白为什么对话越长越费钱、越容易&quot;犯糊涂&quot;。</p>
 <h2>术语卡片</h2>
 <ul>
-<li><strong>消息列表</strong> —— 就是一个&quot;聊天记录&quot;清单，里面按顺序装着&quot;用户说&quot;和&quot;AI说&quot;的每一句话。AI本身没记性，全靠你每次把这张清单递给它，它才知道你们聊到哪了。</li>
-<li><strong>多轮对话</strong> —— 就是&quot;有来有回地聊天&quot;。比如你先问&quot;1+1等于几&quot;，AI答&quot;2&quot;，你再问&quot;那再加1呢&quot;，AI能答&quot;3&quot;。能做到这个，靠的就是把第一轮的话也一起发给AI。</li>
-<li><strong>历史消息</strong> —— 就是之前几轮对话的内容。注意，它不是AI自己记住的，而是<strong>你（程序）负责保存、负责再次发给AI</strong>。AI只是个&quot;一次性&quot;的应答机。</li>
+<li><strong>消息列表</strong> —— 就是一个数组/列表，里面按顺序存着每一条消息，每条消息带&quot;谁说的&quot;（角色）和&quot;说了啥&quot;（内容）。就像你和朋友的微信聊天记录，一条一条排着。</li>
+<li><strong>多轮对话</strong> —— 你和 AI 你一句我一句连续聊下去，AI 能&quot;记得&quot;你前面说过什么。本质是每次提问时，把之前所有的对话记录都打包发给 AI。</li>
+<li><strong>历史消息</strong> —— 就是前面几轮你说过的话和 AI 回答过的话的集合。AI 没有记忆，历史消息就是它的&quot;临时记忆&quot;，你不发它就想不起来。</li>
 </ul>
 <h2>原理精讲</h2>
-<p>想象一下：你找一位<strong>健忘的同事</strong>帮忙干活（这位同事就是AI大模型）。他每次只认一张纸条，你递给他什么，他就看什么，干完活纸条就扔了。</p>
-<ul>
-<li>第一轮，你递纸条：&quot;1+1等于几？&quot; 他答：&quot;2&quot;。</li>
-<li>第二轮，如果你只递纸条：&quot;那再加1呢？&quot; 他会懵——&quot;什么再加1？&quot; 因为他已经把上一张纸条扔了。</li>
-</ul>
-<p><strong>解决办法</strong>：第二轮的时候，你递给他一张<strong>更长的纸条</strong>，上面写着：</p>
-<blockquote>用户：1+1等于几？</blockquote>
-<blockquote>AI：2</blockquote>
-<blockquote>用户：那再加1呢？</blockquote>
-<p>他一看就明白了：&quot;哦，是2+1，等于3！&quot;</p>
-<p><strong>这就是多轮对话的全部秘密</strong>：你的程序负责把&quot;历史消息列表&quot;（那张越来越长的纸条）和&quot;新问题&quot;拼在一起，一次性发给AI。AI不记事儿，但&quot;纸条&quot;记得。</p>
-<p>那&quot;上下文变长后发生了什么&quot;？就像纸条越写越长，两个问题立刻出现：</p>
-<ol>
-<li><strong>成本变高</strong>：AI是按&quot;字数&quot;收费的。纸条越来越长，你每次付的钱就越多。聊100轮，每次都带着前99轮的&quot;废话&quot;去付钱。</li>
-<li><strong>效果变差</strong>：纸条太长，AI容易&quot;看花眼&quot;，找不到重点。就像让你从一篇万字长文里找一句话，反而容易找错。专业说法叫&quot;注意力分散&quot;。</li>
-</ol>
+<p><strong>先想一个问题：AI 有记忆吗？</strong></p>
+<p>没有。AI 就像一个只有 3 秒记忆的人。你问它&quot;我的名字是张三&quot;，它会回答&quot;好的&quot;。你再问&quot;我叫什么？&quot;——它完全不记得。因为它每次收到的问题，都只是你当前发的那一句话。</p>
+<p><strong>那怎么让它&quot;记住&quot;？</strong></p>
+<p>很简单：每次你问问题的时候，把前面所有的对话也一起发过去。</p>
+<p>打个比方：你和一个失忆的朋友聊天。为了让他记住你叫张三，你每次开口前，都先念一遍之前的对话记录：&quot;我说过我叫张三，你也说记住了，现在我问你：我叫什么？&quot;——他当然能答对。</p>
+<p><strong>这就是多轮对话的全部秘密。</strong></p>
+<p>程序上，我们维护一个<strong>消息列表</strong>，像这样：</p>
+<pre><code>[
+  {&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: &quot;你是一个乐于助人的助手&quot;},
+  {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;我叫张三&quot;},
+  {&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: &quot;你好张三！&quot;},
+  {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;我叫什么？&quot;}
+]</code></pre>
+<p>每次调用 AI 接口时，把<strong>整个列表</strong>发过去。AI 看完整个列表，就知道你叫张三了。然后它回答完，我们把它的回答也追加到列表里，等下一轮再发。</p>
+<p><strong>为什么对话越长越贵、越容易糊涂？</strong></p>
+<p>因为每次都要把全部历史发过去。假设你聊了 100 轮，每轮 100 个字，那第 101 轮你要发送大约 1 万字的文本。AI 按字数（token）收费，所以越聊越贵。而且 AI 处理超长文本时，注意力会分散，容易&quot;忘了&quot;前面说的细节——就像你看一篇超长的文章，看到后面就忘了开头。</p>
 <h2>动手任务</h2>
-<h3>手机任务（5分钟）</h3>
-<p>打开你手机里任何一个能聊天的AI应用（比如豆包、Kimi、ChatGPT）。开始以下对话，观察它的反应：</p>
+<p><strong>手机任务（5 分钟）</strong></p>
+<p>打开任意一个 AI 聊天 App（如 ChatGPT、豆包等），做一个小实验：</p>
 <ol>
-<li>问：&quot;给我推荐一部科幻电影。&quot;</li>
-<li>追问：&quot;这个导演还拍过什么？&quot; （注意：它记得刚才推荐的是哪部）</li>
-<li>再问：&quot;刚才推荐的第二部，评分多少？&quot; （如果它推荐了多部，看看它记不记得）</li>
+<li>第一句说：&quot;请记住，我的暗号是&#x27;蓝鲸&#x27;。&quot;</li>
+<li>接着随便聊两句别的。</li>
+<li>然后问：&quot;我的暗号是什么？&quot;</li>
+<li>再开一个新对话，直接问同样的问题。</li>
 </ol>
-<p><strong>思考</strong>：如果它答对了，说明它内部也用了&quot;消息列表&quot;机制。</p>
-<h3>电脑任务（10分钟）—— 写一个命令行聊天程序</h3>
-<p><strong>前提</strong>：你电脑上需要有 <code>python</code> 和 <code>openai</code> 库（<code>pip install openai</code>）。如果没有API Key，可以用模拟数据跑通逻辑。</p>
-<p><strong>步骤</strong>：</p>
+<p>观察：同一个 AI，为什么第一个对话能答对，新对话答不上来？想明白你就掌握了多轮对话的本质。</p>
+<p><strong>电脑任务（10 分钟）</strong></p>
+<p>写一个最简单的命令行聊天程序。需要你有 Python 和一个 API Key（OpenAI 或任意兼容接口的厂商）。</p>
+<p><strong>步骤：</strong></p>
 <ol>
-<li>新建文件 <code>chat.py</code>，复制以下代码（<strong>注意</strong>：如果你没有真实API Key，看第4步的&quot;模拟模式&quot;）：</li>
+<li>安装依赖：</li>
+<pre><code>pip install openai</code></pre>
 </ol>
-<pre><code># chat.py - 多轮对话演示程序
-import openai
+<ol>
+<li>新建文件 <code>chat.py</code>，粘贴以下代码：</li>
+</ol>
+<pre><code>from openai import OpenAI
 
-# 你的API密钥（在platform.openai.com申请）
-client = openai.OpenAI(api_key=&quot;你的KEY&quot;)
+client = OpenAI(api_key=&quot;你的API_KEY&quot;, base_url=&quot;你的接口地址&quot;)
 
-# 核心数据结构：消息列表。一开始是空的。
-messages = []
+# 消息列表：程序的核心记忆
+messages = [
+    {&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: &quot;你是一个友好的助手。&quot;}
+]
 
-print(&quot;开始聊天！输入 &#x27;quit&#x27; 退出。&quot;)
+print(&quot;开始聊天吧！输入 exit 退出。&quot;)
 
 while True:
-    user_input = input(&quot;你: &quot;)
-    if user_input == &quot;quit&quot;:
+    user_input = input(&quot;你：&quot;)
+    if user_input == &quot;exit&quot;:
         break
-
-    # 1. 把用户的新消息，追加到历史列表里
+    
+    # 1. 把用户的话追加到消息列表
     messages.append({&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: user_input})
-
-    # 2. 把整个消息列表（历史+新问题）一起发给AI
+    
+    # 2. 把整个消息列表发给 AI
     response = client.chat.completions.create(
-        model=&quot;gpt-4o-mini&quot;,  # 便宜够用
-        messages=messages     # 这就是&quot;多轮对话&quot;的关键！
+        model=&quot;你的模型名&quot;,
+        messages=messages
     )
-
-    # 3. 拿到AI的回复
-    ai_reply = response.choices[0].message.content
-    print(f&quot;AI: {ai_reply}&quot;)
-
-    # 4. 把AI的回复也存进历史列表，供下一轮使用
-    messages.append({&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: ai_reply})
-
-    # 5. 观察消息列表有多长（这就是&quot;成本&quot;）
-    total_chars = sum(len(m[&quot;content&quot;]) for m in messages)
-    print(f&quot;[提示] 当前历史消息总字数: {total_chars}&quot;)</code></pre>
+    
+    # 3. 拿到 AI 回复
+    reply = response.choices[0].message.content
+    
+    # 4. 把 AI 的回复也追加到消息列表
+    messages.append({&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: reply})
+    
+    print(f&quot;AI：{reply}&quot;)</code></pre>
 <ol>
-<li><strong>运行</strong>：在终端执行 <code>python chat.py</code>，然后连续聊几句，比如&quot;我喜欢科幻片&quot;、&quot;推荐一部&quot;、&quot;为什么推荐这部？&quot;。</li>
+<li>运行：<code>python chat.py</code></li>
 </ol>
 <ol>
-<li><strong>观察</strong>：注意每次打印的&quot;历史消息总字数&quot;在增加。这就是为什么聊得越久越花钱。</li>
+<li>测试：先告诉它&quot;我叫张三&quot;，隔几句再问&quot;我叫什么？&quot;——它能答对。然后观察：聊得越久，每次发送前程序里 <code>messages</code> 越长。</li>
 </ol>
-<ol>
-<li><strong>没有API Key怎么办？</strong> 把第2步替换成模拟回复（不需要联网）：</li>
-</ol>
-<pre><code>    # 模拟AI回复（把&quot;你&quot;的问题原样返回，假装在回答）
-    ai_reply = f&quot;（模拟回复）你刚才说的是：{user_input}&quot;</code></pre>
-<p>这样你也能完整跑通&quot;多轮对话&quot;的逻辑结构。</p>
+<p><strong>关键代码就 3 行：</strong> 追加用户消息 → 发整个列表 → 追加 AI 回复。循环往复，就是多轮对话。</p>
 <h2>案例分享</h2>
 <ul>
-<li><strong>要点</strong>：这位作者发现，用AI写代码（vibe coding）两年后，自己手写代码反而更快更靠谱。核心原因是：AI写的代码像&quot;拼积木&quot;，但积木之间怎么咬合，AI不懂。</li>
-<li><strong>案例背景</strong>：来自 Hacker News 上一篇热帖，作者在 atmoio.substack.com 上分享了自己的经历。</li>
-<li><strong>解决什么问题</strong>：很多程序员（包括硬件工程师）觉得&quot;AI能帮我写代码&quot;就等于&quot;我不用懂代码&quot;。这个案例告诉你：AI能帮你写<strong>单块代码</strong>，但<strong>系统设计、模块衔接</strong>还得靠人脑。就像你会用万用表，但设计电路还得懂原理。</li>
-<li><strong>如何实现</strong>：作者具体怎么做的细节未知，核心是：他对比了&quot;用AI生成代码&quot;和&quot;自己手写&quot;在同一个项目上的时间与质量，发现手写更优。详情见原链接。</li>
-<li><strong>原链接</strong>：https://atmoio.substack.com/p/after-two-years-of-vibecoding-im</li>
+<li><strong>要点</strong>：一个被裁员的工程师，用 6 个月从零做出一台开源笔记本电脑；他用 AI 辅助完成了大量硬件和软件设计工作；最终做成了真正的产品并开源。</li>
+<li><strong>案例背景</strong>：Byran 在 2023 年春季 Meta 裁员潮中被裁。他没有急着找下一份工作，而是决定做一件疯狂的事——从零设计并制造一台笔记本电脑。他把整个项目开源在 GitHub 上。</li>
+<li><strong>解决什么问题</strong>：市面上几乎没有真正开源的笔记本电脑硬件，大多数&quot;开源硬件&quot;项目只是开发板级别。他想要一台从电路板到外壳都完全开放、用户可以自己组装和维修的笔记本。</li>
+<li><strong>如何实现</strong>：他花了约 6 个月时间，用 AI 编程助手辅助编写固件和驱动程序，用 AI 辅助阅读芯片数据手册、排查硬件问题。整个设计过程（原理图、PCB、外壳 3D 模型、系统软件）全部开源。具体的技术细节和踩坑记录见原链接。</li>
+<li><strong>原链接</strong>：https://www.byran.ee/posts/creation/</li>
 </ul>
 <h2>今日动态</h2>
 <ul>
-<li><strong>Claude Opus 4.6 连续 900 次返回空结果，该重试吗？</strong> —— 这条值得关注：它说明大模型API不是100%可靠的，你的聊天程序要考虑&quot;如果AI没回复怎么办&quot;。做硬件的人都懂&quot;容错设计&quot;，软件也一样。链接：https://zenodo.org/records/21696066</li>
+<li><strong>Claude Opus 4.6 连续 900 次返回空结果，Agent 该不该重试？</strong> —— 这提醒我们，AI 接口不是 100% 可靠的。你写的聊天程序也要考虑&quot;如果 AI 没回复怎么办&quot;，加个重试或报错机制。https://zenodo.org/records/21696066</li>
+<li><strong>Homebrew 6.0.0 发布</strong> —— 如果你用 Mac 开发，Homebrew 是装软件的神器。6.0 加强了安全机制和性能，值得更新。https://brew.sh/2026/06/11/homebrew-6.0.0/</li>
 </ul>
 <h2>打卡</h2>
-<p><strong>标准</strong>：能用自己的话说出&quot;多轮对话就是把历史</p>
+<p><strong>完成标准：</strong> 能用自己的话解释&quot;多轮对话 = 把消息列表全部发给模型&quot;，并跑通了上面的 <code>chat.py</code> 程序，实现了连续对话。</p>
     <hr>
 <p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m1u10%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
 <p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m1u10%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
