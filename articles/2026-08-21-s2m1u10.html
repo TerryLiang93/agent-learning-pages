@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自己写一个&#x27;对话循环&#x27;</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段二：动手搭建</span>
+      <h1>自己写一个&#x27;对话循环&#x27;</h1>
+      <div class="meta">2026-08-21 · 环境准备 · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>今天咱们干一件特别有成就感的事：<strong>自己写一个能连续聊天的程序</strong>。你可能会想，聊天谁不会？但关键是搞明白——为什么AI能记住你上一句说了啥？其实原理简单得吓人：<strong>每次对话，把之前说过的话全部打包再发给AI一次</strong>。今天你就亲手实现它，顺便看看&quot;记性太好&quot;会带来什么代价（钱和速度）。</p>
+<h2>术语卡片</h2>
+<ul>
+<li><strong>消息列表</strong> —— 就是一个&quot;聊天记录&quot;清单，里面按顺序装着&quot;用户说&quot;和&quot;AI说&quot;的每一句话。AI本身没记性，全靠你每次把这张清单递给它，它才知道你们聊到哪了。</li>
+<li><strong>多轮对话</strong> —— 就是&quot;有来有回地聊天&quot;。比如你先问&quot;1+1等于几&quot;，AI答&quot;2&quot;，你再问&quot;那再加1呢&quot;，AI能答&quot;3&quot;。能做到这个，靠的就是把第一轮的话也一起发给AI。</li>
+<li><strong>历史消息</strong> —— 就是之前几轮对话的内容。注意，它不是AI自己记住的，而是<strong>你（程序）负责保存、负责再次发给AI</strong>。AI只是个&quot;一次性&quot;的应答机。</li>
+</ul>
+<h2>原理精讲</h2>
+<p>想象一下：你找一位<strong>健忘的同事</strong>帮忙干活（这位同事就是AI大模型）。他每次只认一张纸条，你递给他什么，他就看什么，干完活纸条就扔了。</p>
+<ul>
+<li>第一轮，你递纸条：&quot;1+1等于几？&quot; 他答：&quot;2&quot;。</li>
+<li>第二轮，如果你只递纸条：&quot;那再加1呢？&quot; 他会懵——&quot;什么再加1？&quot; 因为他已经把上一张纸条扔了。</li>
+</ul>
+<p><strong>解决办法</strong>：第二轮的时候，你递给他一张<strong>更长的纸条</strong>，上面写着：</p>
+<blockquote>用户：1+1等于几？</blockquote>
+<blockquote>AI：2</blockquote>
+<blockquote>用户：那再加1呢？</blockquote>
+<p>他一看就明白了：&quot;哦，是2+1，等于3！&quot;</p>
+<p><strong>这就是多轮对话的全部秘密</strong>：你的程序负责把&quot;历史消息列表&quot;（那张越来越长的纸条）和&quot;新问题&quot;拼在一起，一次性发给AI。AI不记事儿，但&quot;纸条&quot;记得。</p>
+<p>那&quot;上下文变长后发生了什么&quot;？就像纸条越写越长，两个问题立刻出现：</p>
+<ol>
+<li><strong>成本变高</strong>：AI是按&quot;字数&quot;收费的。纸条越来越长，你每次付的钱就越多。聊100轮，每次都带着前99轮的&quot;废话&quot;去付钱。</li>
+<li><strong>效果变差</strong>：纸条太长，AI容易&quot;看花眼&quot;，找不到重点。就像让你从一篇万字长文里找一句话，反而容易找错。专业说法叫&quot;注意力分散&quot;。</li>
+</ol>
+<h2>动手任务</h2>
+<h3>手机任务（5分钟）</h3>
+<p>打开你手机里任何一个能聊天的AI应用（比如豆包、Kimi、ChatGPT）。开始以下对话，观察它的反应：</p>
+<ol>
+<li>问：&quot;给我推荐一部科幻电影。&quot;</li>
+<li>追问：&quot;这个导演还拍过什么？&quot; （注意：它记得刚才推荐的是哪部）</li>
+<li>再问：&quot;刚才推荐的第二部，评分多少？&quot; （如果它推荐了多部，看看它记不记得）</li>
+</ol>
+<p><strong>思考</strong>：如果它答对了，说明它内部也用了&quot;消息列表&quot;机制。</p>
+<h3>电脑任务（10分钟）—— 写一个命令行聊天程序</h3>
+<p><strong>前提</strong>：你电脑上需要有 <code>python</code> 和 <code>openai</code> 库（<code>pip install openai</code>）。如果没有API Key，可以用模拟数据跑通逻辑。</p>
+<p><strong>步骤</strong>：</p>
+<ol>
+<li>新建文件 <code>chat.py</code>，复制以下代码（<strong>注意</strong>：如果你没有真实API Key，看第4步的&quot;模拟模式&quot;）：</li>
+</ol>
+<pre><code># chat.py - 多轮对话演示程序
+import openai
+
+# 你的API密钥（在platform.openai.com申请）
+client = openai.OpenAI(api_key=&quot;你的KEY&quot;)
+
+# 核心数据结构：消息列表。一开始是空的。
+messages = []
+
+print(&quot;开始聊天！输入 &#x27;quit&#x27; 退出。&quot;)
+
+while True:
+    user_input = input(&quot;你: &quot;)
+    if user_input == &quot;quit&quot;:
+        break
+
+    # 1. 把用户的新消息，追加到历史列表里
+    messages.append({&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: user_input})
+
+    # 2. 把整个消息列表（历史+新问题）一起发给AI
+    response = client.chat.completions.create(
+        model=&quot;gpt-4o-mini&quot;,  # 便宜够用
+        messages=messages     # 这就是&quot;多轮对话&quot;的关键！
+    )
+
+    # 3. 拿到AI的回复
+    ai_reply = response.choices[0].message.content
+    print(f&quot;AI: {ai_reply}&quot;)
+
+    # 4. 把AI的回复也存进历史列表，供下一轮使用
+    messages.append({&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: ai_reply})
+
+    # 5. 观察消息列表有多长（这就是&quot;成本&quot;）
+    total_chars = sum(len(m[&quot;content&quot;]) for m in messages)
+    print(f&quot;[提示] 当前历史消息总字数: {total_chars}&quot;)</code></pre>
+<ol>
+<li><strong>运行</strong>：在终端执行 <code>python chat.py</code>，然后连续聊几句，比如&quot;我喜欢科幻片&quot;、&quot;推荐一部&quot;、&quot;为什么推荐这部？&quot;。</li>
+</ol>
+<ol>
+<li><strong>观察</strong>：注意每次打印的&quot;历史消息总字数&quot;在增加。这就是为什么聊得越久越花钱。</li>
+</ol>
+<ol>
+<li><strong>没有API Key怎么办？</strong> 把第2步替换成模拟回复（不需要联网）：</li>
+</ol>
+<pre><code>    # 模拟AI回复（把&quot;你&quot;的问题原样返回，假装在回答）
+    ai_reply = f&quot;（模拟回复）你刚才说的是：{user_input}&quot;</code></pre>
+<p>这样你也能完整跑通&quot;多轮对话&quot;的逻辑结构。</p>
+<h2>案例分享</h2>
+<ul>
+<li><strong>要点</strong>：这位作者发现，用AI写代码（vibe coding）两年后，自己手写代码反而更快更靠谱。核心原因是：AI写的代码像&quot;拼积木&quot;，但积木之间怎么咬合，AI不懂。</li>
+<li><strong>案例背景</strong>：来自 Hacker News 上一篇热帖，作者在 atmoio.substack.com 上分享了自己的经历。</li>
+<li><strong>解决什么问题</strong>：很多程序员（包括硬件工程师）觉得&quot;AI能帮我写代码&quot;就等于&quot;我不用懂代码&quot;。这个案例告诉你：AI能帮你写<strong>单块代码</strong>，但<strong>系统设计、模块衔接</strong>还得靠人脑。就像你会用万用表，但设计电路还得懂原理。</li>
+<li><strong>如何实现</strong>：作者具体怎么做的细节未知，核心是：他对比了&quot;用AI生成代码&quot;和&quot;自己手写&quot;在同一个项目上的时间与质量，发现手写更优。详情见原链接。</li>
+<li><strong>原链接</strong>：https://atmoio.substack.com/p/after-two-years-of-vibecoding-im</li>
+</ul>
+<h2>今日动态</h2>
+<ul>
+<li><strong>Claude Opus 4.6 连续 900 次返回空结果，该重试吗？</strong> —— 这条值得关注：它说明大模型API不是100%可靠的，你的聊天程序要考虑&quot;如果AI没回复怎么办&quot;。做硬件的人都懂&quot;容错设计&quot;，软件也一样。链接：https://zenodo.org/records/21696066</li>
+</ul>
+<h2>打卡</h2>
+<p><strong>标准</strong>：能用自己的话说出&quot;多轮对话就是把历史</p>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m1u10%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m1u10%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E8%87%AA%E5%B7%B1%E5%86%99%E4%B8%80%E4%B8%AA%27%E5%AF%B9%E8%AF%9D%E5%BE%AA%E7%8E%AF%27&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
