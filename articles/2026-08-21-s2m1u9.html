@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Python 与 API：第一次调用大模型</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段二：动手搭建</span>
+      <h1>Python 与 API：第一次调用大模型</h1>
+      <div class="meta">2026-08-21 · 环境准备 · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>昨天咱们已经聊过这个单元了，但你没来得及动手，没关系——今天咱们把重点再过一遍，然后直接上手。</p>
+<p>今天要做的事，说白了就是：<strong>让你的电脑跟大模型说上话</strong>。</p>
+<p>你平时在网页上跟 ChatGPT 聊天，背后就是浏览器替你把话传给了大模型，再把回复拿回来给你看。今天咱们不通过网页，而是<strong>用 Python 自己写代码</strong>，直接跟大模型对话。这就像你以前去饭店点菜（打开网页），现在你要学会自己进厨房跟厨师要菜（写代码调用 API）。</p>
+<p>为什么这对你重要？因为作为硬件工程师，你以后做的嵌入式设备、上位机工具，很多都要靠这种方式跟云端 AI 通话。你不可能让每个设备都打开浏览器去聊天，你得让程序自己去说。</p>
+<p>今天完成的标准很明确：<strong>你的电脑上跑通一次代码，看到模型给你回复一句话</strong>。</p>
+<hr>
+<h2>术语卡片</h2>
+<p><strong>API</strong> —— 可以理解成&quot;饭店的菜单+传菜窗口&quot;。你不需要进厨房知道厨师怎么炒菜，你只要按菜单（API 文档）点菜（发请求），服务员（API）就会把菜端给你（返回结果）。在程序里，API 就是别人写好的一套接口，你按规矩调用，就能拿到对方的功能。</p>
+<p><strong>API Key</strong> —— 相当于&quot;饭店的会员卡&quot;。你点菜（调用 API）的时候必须出示这张卡，证明你是付过钱的客人。没有它，饭店不给你上菜。大模型公司靠这个识别你是谁、扣你多少钱。</p>
+<p><strong>SDK</strong> —— &quot;别人帮你准备好的工具箱&quot;。比如你要做木工，不用自己磨锤子、锯子，直接买一套现成工具箱。SDK 就是官方帮你封装好的代码库，里面已经写好了怎么调用 API 的细节，你只需要调几个函数就行。</p>
+<p><strong>HTTP</strong> —— 互联网上&quot;传话的规矩&quot;。就像写信有信封格式、邮局有投递规则一样，程序之间传递数据也要遵守一套格式。你发请求、收响应，都是走 HTTP 这个规矩。你不需要精通它，但要知道它是底层传输的&quot;邮递系统&quot;。</p>
+<hr>
+<h2>原理精讲</h2>
+<h3>一、整条链路长什么样</h3>
+<p>咱们把&quot;用 Python 调用大模型&quot;这件事拆开看：</p>
+<pre><code>你的 Python 程序
+    ↓ 发送请求（带着你的问题 + 你的 API Key）
+    ↓ 走 HTTP 协议，经过互联网
+大模型服务器（比如 OpenAI、DeepSeek、通义千问）
+    ↓ 模型思考，生成回复
+    ↓ 走 HTTP 协议，返回结果
+你的 Python 程序 ← 拿到回复，打印出来</code></pre>
+<p>这个过程跟你在浏览器里问 ChatGPT 完全一样，只不过浏览器换成了你的代码。</p>
+<h3>二、为什么要用 API Key</h3>
+<p>你可能会想：我直接调大模型的接口，它怎么知道我是谁？</p>
+<p>这就是 API Key 的作用。你在大模型平台注册账号，充值，然后平台给你一串很长的字符——这就是你的 API Key。你每次请求都带上它，平台就知道&quot;哦，是这位用户在调用，扣他的费&quot;。</p>
+<p><strong>关键点：API Key 就是你的钱袋子密码，绝对不能泄露。</strong> 就像银行卡密码一样，谁拿到谁就能花你的钱。所以咱们要把它放在环境变量里，而不是直接写在代码里。</p>
+<h3>三、环境变量是什么</h3>
+<p>【术语】环境变量 —— 就是操作系统里的一些&quot;全局参数&quot;，任何程序运行时都能去读取。比如你的 Windows 系统里有个 PATH 变量，告诉电脑&quot;去哪里找可执行文件&quot;。</p>
+<p>咱们把 API Key 存在环境变量里，代码运行时去读它。好处是：</p>
+<ol>
+<li>代码里不出现明文密码，即使代码被人看到，也拿不到你的 Key</li>
+<li>换 Key 的时候不用改代码，改环境变量就行</li>
+</ol>
+<h3>四、用 SDK 还是直接发 HTTP 请求</h3>
+<p>两种方式都能调 API，但咱们用 SDK。原因很简单：<strong>SDK 帮咱们处理了 80% 的脏活累活</strong>——比如拼接 HTTP 请求、处理超时、解析返回格式。咱们只需要写几行代码，就能完成调用。</p>
+<p>就好比你要发快递，你可以自己去邮局排队填单子（直接写 HTTP 请求），也可以找快递员上门取件（用 SDK）。后者省事得多。</p>
+<hr>
+<h2>动手任务</h2>
+<h3>第一步：安装 Python（手机上看步骤，电脑上操作）</h3>
+<p>如果你已经装过 Python，跳过这一步。没装的话：</p>
+<ol>
+<li>打开浏览器，访问 https://www.python.org/downloads/</li>
+<li>点击黄色的 &quot;Download Python 3.x.x&quot; 按钮</li>
+<li>下载完成后，双击安装包</li>
+<li><strong>重要</strong>：安装界面第一页，勾选最下方的 &quot;Add Python to PATH&quot;（这会把 Python 加入环境变量，否则后面命令找不到）</li>
+<li>点击 &quot;Install Now&quot;，等它装完</li>
+</ol>
+<p>验证是否装好：按 <code>Win + R</code>，输入 <code>cmd</code>，回车。在弹出的黑色窗口里输入：</p>
+<pre><code>python --version</code></pre>
+<p>如果显示 <code>Python 3.x.x</code>，说明装好了。</p>
+<h3>第二步：安装 SDK（电脑任务）</h3>
+<p>咱们用 OpenAI 兼容的接口来演示。今天用 DeepSeek 的 API 来练习（国内注册方便，价格便宜）。</p>
+<ol>
+<li>打开命令行（Win + R → cmd）</li>
+<li>安装 OpenAI SDK（DeepSeek 兼容这个 SDK）：</li>
+</ol>
+<pre><code>pip install openai</code></pre>
+<p>看到 <code>Successfully installed openai-...</code> 就说明装好了。</p>
+<h3>第三步：获取 API Key</h3>
+<ol>
+<li>打开 https://platform.deepseek.com/ ，注册账号</li>
+<li>进入&quot;API Keys&quot;页面，点&quot;创建 API Key&quot;</li>
+<li>复制生成的那串字符（注意：只显示一次，关掉就看不到了）</li>
+</ol>
+<h3>第四步：把 API Key 存到环境变量</h3>
+<p>在命令行里执行（<strong>把 <code>sk-xxxx</code> 换成你自己的 Key</strong>）：</p>
+<pre><code>setx DEEPSEEK_API_KEY &quot;sk-xxxx&quot;</code></pre>
+<p>然后<strong>关掉命令行窗口，重新打开一个新的命令行窗口</strong>（这一步必须做，否则读不到新设置的环境变量）。</p>
+<h3>第五步：写代码调 API（电脑任务）</h3>
+<p>新建一个文件，命名为 <code>test_ai.py</code>，用记事本打开，粘贴以下内容：</p>
+<pre><code>import os
+from openai import OpenAI
+
+# 从环境变量读取 API Key
+api_key = os.environ.get(&quot;DEEPSEEK_API_KEY&quot;)
+
+# 创建客户端（相当于拿到饭店的会员卡）
+client = OpenAI(api_key=api_key, base_url=&quot;https://api.deepseek.com&quot;)
+
+# 发请求：问模型一个问题
+response = client.chat.completions.create(
+    model=&quot;deepseek-chat&quot;,
+    messages=[
+        {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;你好，请用一句话介绍你自己&quot;}
+    ]
+)
+
+# 打印模型的回复
+print(response.choices[0].message.content)</code></pre>
+<p>保存文件后，在命令行里运行：</p>
+<pre><code>python test_ai.py</code></pre>
+<p>如果看到模型回复了一句话（比如&quot;我是 DeepSeek，一个 AI 助手...&quot;），恭喜你，<strong>你已经跑通了第一次 API 调用</strong>。</p>
+<h3>第六步：理解代码在干嘛</h3>
+<p>逐行看：</p>
+<ul>
+<li><code>import os</code> —— 引入操作系统的工具，用来读环境变量</li>
+<li><code>os.environ.get(&quot;DEEPSEEK_API_KEY&quot;)</code> —— 从环境变量里拿你的 Key</li>
+<li><code>OpenAI(api_key=..., base_url=...)</code> —— 创建一个&quot;客户端&quot;对象，告诉它&quot;我是谁 + 去哪找服务&quot;</li>
+<li><code>client.chat.completions.create(...)</code> —— 这是<strong>发请求</strong>的动作。参数里 <code>model</code> 指定用哪个模型，<code>messages</code> 是你说的话</li>
+<li><code>response</code> —— 这是<strong>响应</strong>，模型返回给你的所有内容</li>
+<li><code>response.choices[0].message.content</code> —— 从响应里把模型说的那句话提取出来</li>
+</ul>
+<h3>手机任务（没有电脑时）</h3>
+<p>用手机浏览器打开 https://platform.deepseek.com/ ，注册账号，创建一个 API Key。把 Key 复制保存到手机备忘录里。等你有电脑时，直接跳到上面第四步开始。</p>
+<hr>
+<h2>今日动态</h2>
+<p>今天没有特别直接相关的动态，但有一条值得瞄一眼：</p>
+<p><strong><a href="https://github.com/ivegotahunnitonit/bartholomew" target="_blank" rel="noopener">Hacker News: BTP v2.2 – An open, offline cryptographic trust protocol for AI agents</a></strong></p>
+<p>这条讲的是给 AI 智能体之间建立&quot;信任协议&quot;，类似于让两个 AI 程序互相确认&quot;你真的是你&quot;。等你以后做 AI 相关的硬件设备，设备与设备、设备与云端之间的身份认证会越来越重要，这个方向值得关注。</p>
+<hr>
+<h2>打卡</h2>
+<p><strong>完成标准</strong>：在你的电脑上运行 <code>python test_ai.py</code>，看到模型回复了一句话。把回复内容截图或记下来，这就是今天的成果。</p>
+    <hr>
+<p>✅ 理论卡已打卡</p>
+<p>✅ 任务卡已打卡</p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9APython%20%E4%B8%8E%20API%EF%BC%9A%E7%AC%AC%E4%B8%80%E6%AC%A1%E8%B0%83%E7%94%A8%E5%A4%A7%E6%A8%A1%E5%9E%8B&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
