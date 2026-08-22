@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>自己写一个&#x27;对话循环&#x27;</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段二：动手搭建</span>
+      <h1>自己写一个&#x27;对话循环&#x27;</h1>
+      <div class="meta">2026-08-22 · 环境准备 · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>今天咱们干一件很有成就感的事：亲手写一个能跟你连续聊天的程序。你以为的多轮对话很神秘，其实本质特简单——<strong>把之前聊过的话全部打包，再次发给模型</strong>。就像你跟朋友聊天，朋友得记得你们刚才说了啥，才能接上话。我们会写一个命令行小工具，跑起来之后你就彻底明白大模型是怎么&quot;记住&quot;上下文的了。</p>
+<h2>术语卡片</h2>
+<ul>
+<li><strong>消息列表</strong> —— 就是你和 AI 之间所有对话记录的清单，每一条都标着是谁说的（你是&quot;user&quot;，AI是&quot;assistant&quot;）以及说了啥。程序每次调用模型时，把整个清单一次性发过去。</li>
+<li><strong>多轮对话</strong> —— 就是连续聊好几轮，每轮都基于之前聊过的内容继续。对应的是&quot;单轮对话&quot;（每次都是新开始，AI不记得你刚才说过啥）。</li>
+<li><strong>历史消息</strong> —— 就是之前几轮你和 AI 说过的所有话。多轮对话的核心就是把这些历史消息一起发给模型，让它&quot;看起来&quot;有记忆。</li>
+</ul>
+<h2>原理精讲</h2>
+<p><strong>先想一个问题：大模型有记忆吗？</strong></p>
+<p>答案是：<strong>没有</strong>。大模型本身就像一个金鱼，你每次问它问题，它都当你是第一次见面。它唯一的&quot;记忆&quot;方式，就是你把之前聊过的话写在问题里一起送过去。</p>
+<p>打个比方：你去窗口办事，第一次问&quot;我要办居住证&quot;，工作人员给你列了材料清单。你回去准备材料，第二次来直接问&quot;材料齐了，下一步呢？&quot;——如果工作人员不记得你第一次问了啥，就不知道你说的&quot;材料&quot;是啥。所以你得把第一次的对话也带过去：&quot;我上次问过办居住证，你让我准备材料，现在我材料齐了，下一步呢？&quot;——<strong>这就是多轮对话的本质：把历史消息一起发给模型</strong>。</p>
+<p>具体到代码层面，调用大模型 API 时，你发送的请求里有一个 <code>messages</code> 字段，它是一个数组（列表），结构长这样：</p>
+<pre><code>[
+  {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;你好，我想学编程&quot;},
+  {&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: &quot;太好了！你想学什么语言？&quot;},
+  {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;我想学 Python&quot;}
+]</code></pre>
+<p>第一轮：你发了第一条消息。第二轮：你发了两条（历史+新问题）。第三轮：你发三条……<strong>对话越长，你要发的消息越多，花的钱也越多，AI 的反应也可能变慢</strong>。这就是后面要观察的点。</p>
+<h2>动手任务</h2>
+<p><strong>手机任务（5分钟）：</strong></p>
+<p>打开任意一个 AI 聊天 App（比如 ChatGPT、文心一言、豆包），连续问它几个关联问题，比如：</p>
+<ol>
+<li>&quot;给我推荐三道家常菜&quot;</li>
+<li>&quot;第一道菜的步骤是什么？&quot;</li>
+<li>&quot;如果我想换成素菜，怎么改？&quot;</li>
+</ol>
+<p>注意观察：第三个问题它知道&quot;第一道菜&quot;是指你之前问的那道——这就是多轮对话。然后你新开一个对话窗口，直接问&quot;如果我想换成素菜，怎么改？&quot;——看它会不会懵。这就是有历史和无历史的区别。</p>
+<p><strong>电脑任务（10分钟）：</strong></p>
+<p>写一个最简单的 Python 命令行聊天程序。前提：你已经有 OpenAI 或 DeepSeek 等 API Key（没有的话先去注册一个，DeepSeek 便宜）。</p>
+<pre><code># chat.py
+from openai import OpenAI
+
+client = OpenAI(api_key=&quot;你的API密钥&quot;, base_url=&quot;https://api.deepseek.com&quot;)
+
+messages = []  # 历史消息列表，初始为空
+
+print(&quot;开始聊天吧！（输入 quit 退出）&quot;)
+while True:
+    user_input = input(&quot;你：&quot;)
+    if user_input == &quot;quit&quot;:
+        break
+    
+    # 把用户新说的话加入消息列表
+    messages.append({&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: user_input})
+    
+    # 把整个消息列表发给模型
+    response = client.chat.completions.create(
+        model=&quot;deepseek-chat&quot;,
+        messages=messages
+    )
+    
+    # 取出 AI 的回复，加入消息列表
+    reply = response.choices[0].message.content
+    print(f&quot;AI：{reply}&quot;)
+    messages.append({&quot;role&quot;: &quot;assistant&quot;, &quot;content&quot;: reply})</code></pre>
+<p>运行方式：<code>pip install openai</code> 然后 <code>python chat.py</code>。</p>
+<p>运行后连续聊几句，比如：</p>
+<ul>
+<li>你：我叫张三</li>
+<li>AI：你好张三！</li>
+<li>你：我叫什么名字？</li>
+</ul>
+<p>如果 AI 回答&quot;张三&quot;，说明多轮对话生效了。然后你观察：聊了 20 轮之后，每次请求是不是越来越慢、花费越来越多？</p>
+<h2>案例分享</h2>
+<ul>
+<li><strong>要点</strong>：一个被裁员的 Meta 工程师，转头做游戏并在 Steam 上取得成绩；AI 工具降低了个人开发者的制作门槛；职业转型可以靠&quot;做具体的东西&quot;来打开新路。</li>
+<li><strong>案例背景</strong>：作者曾在 Meta 做编译器/运行时相关工作，2023 年春季裁员潮中被裁。他没有立刻找下一份工作，而是开始做游戏。</li>
+<li><strong>解决什么问题</strong>：解决&quot;被裁后如何重新找到方向和收入&quot;的问题——用自己积累的技术能力做独立产品。</li>
+<li><strong>如何实现</strong>：作者利用自己多年编译器/运行时领域的底层技术功底，结合 AI 编程工具加速开发流程，从零开始制作游戏并发布到 Steam。具体用了哪些 AI 工具、开发周期多久，详情见原链接。</li>
+<li><strong>原链接</strong>：https://news.ycombinator.com/item?id=43186406</li>
+</ul>
+<h2>今日动态</h2>
+<ul>
+<li><strong>用 1 个开源大模型替换 223 个节点的 Agent 图</strong>（HN 讨论中）：有人发现一个复杂到有 223 个节点的 Agent 编排系统，被一个开源 LLM 直接替代了。这说明<strong>很多时候我们过度设计了</strong>——简单方案往往更可靠。https://www.netic.ai/blog/replacing-node-agent-graph-with-open-source-llm</li>
+<li><strong>开源笔记本项目</strong>：有人花了 6 个月从零造了一台完全开源的笔记本电脑。对硬件工程师来说是个很好的参考——看看别人怎么把整个硬件链路开源出来的。https://www.byran.ee/posts/creation/</li>
+</ul>
+<h2>打卡</h2>
+<p>今天完成的标准：能用自己的话解释&quot;多轮对话就是每次把历史消息列表一起发给模型&quot;，并且 <code>python chat.py</code> 跑通，连续对话 5 轮以上不报错。</p>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m1u10%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m1u10%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E8%87%AA%E5%B7%B1%E5%86%99%E4%B8%80%E4%B8%AA%27%E5%AF%B9%E8%AF%9D%E5%BE%AA%E7%8E%AF%27&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
