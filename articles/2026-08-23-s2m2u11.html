@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>给 Agent 装&#x27;手&#x27;：实现第一次工具调用</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段二：动手搭建</span>
+      <h1>给 Agent 装&#x27;手&#x27;：实现第一次工具调用</h1>
+      <div class="meta">2026-08-23 · 第一个 Agent · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>今天给 Agent 装&quot;手&quot;——让它不只是聊天，而是能真正帮你干活。核心是学会一种<strong>三方协作</strong>的模式：你写代码、模型做决定、程序去执行。就像你请了个助理，助理不会自己泡咖啡，但他会告诉你怎么泡，你去执行，再把结果告诉他。今天跑通这个闭环，你的 Agent 就从&quot;嘴炮&quot;变成&quot;能干活&quot;了。</p>
+<h2>术语卡片</h2>
+<p><strong>工具定义</strong> —— 给模型看的&quot;说明书&quot;，告诉它&quot;我有这个功能，你要用的时候按这个格式来喊我&quot;。相当于餐厅菜单：上面写了菜名（函数名）、简介（描述）、原料（参数），顾客（模型）照着点菜就行。</p>
+<p><strong>JSON</strong> —— 一种通用的数据交换格式，长得像嵌套的字典。你可以把它理解成&quot;填好的表格&quot;：有键（字段名）有值（内容），机器和人都能看懂。比如 <code>{&quot;city&quot;: &quot;北京&quot;, &quot;days&quot;: 3}</code> 就是一条 JSON。</p>
+<p><strong>参数解析</strong> —— 把模型返回的&quot;点菜单&quot;拆开，取出里面的具体数值，传给对应的函数。就像服务员把顾客写的&quot;牛肉面，少辣&quot;翻译成后厨能执行的指令：<code>面条=牛肉面，辣度=少</code>。</p>
+<h2>原理精讲</h2>
+<p>先想一个生活场景：你让同事帮你查一下明天的天气。你们俩的对话应该是什么样的？</p>
+<ol>
+<li>你告诉同事：&quot;我有查天气的 App，你要查的时候告诉我城市名就行&quot;（<strong>声明工具</strong>）</li>
+<li>同事说：&quot;我想查北京的天气&quot;（<strong>模型返回调用请求</strong>）</li>
+<li>你打开 App 输入&quot;北京&quot;，看到结果后告诉同事：&quot;北京明天 25 度，晴&quot;（<strong>程序执行并回传结果</strong>）</li>
+</ol>
+<p>工具调用的原理就是这个，只是把&quot;同事&quot;换成了&quot;大模型&quot;，把&quot;你&quot;换成了&quot;你写的代码&quot;。</p>
+<p>具体到代码层面，分三步：</p>
+<p><strong>第一步：给模型看&quot;菜单&quot;</strong>。你定义一个 JSON 结构，描述你的函数叫什么、干什么用、需要什么参数。这个结构叫&quot;工具定义&quot;【术语】。模型本身不会执行任何代码，它只是&quot;读菜单&quot;。</p>
+<p><strong>第二步：模型回传&quot;点单&quot;</strong>。当你问模型&quot;北京天气怎么样&quot;时，模型看到菜单上有&quot;查天气&quot;这个工具，就会返回一段特殊格式的 JSON【术语】：<code>{&quot;name&quot;: &quot;query_weather&quot;, &quot;arguments&quot;: {&quot;city&quot;: &quot;北京&quot;}}</code>。注意，模型<strong>不会真的去查</strong>，它只是告诉你&quot;我想用这个工具，参数是这个&quot;。</p>
+<p><strong>第三步：你自己执行</strong>。你的代码收到这段 JSON 后，做参数解析【术语】——把 <code>city</code> 的值取出来，调用你写的 <code>query_weather(&quot;北京&quot;)</code> 函数，拿到结果，再拼成一句自然语言回传给模型。模型收到结果后，就能继续回答用户的问题了。</p>
+<p>关键点：<strong>模型是&quot;大脑&quot;，你的代码是&quot;手&quot;</strong>。模型负责判断该用什么工具、给什么参数，你的代码负责真正干活。两者通过 JSON 这个&quot;纸条&quot;交流。</p>
+<h2>动手任务</h2>
+<p><strong>手机任务（5 分钟）</strong>：打开任意一个能调用工具的 AI 应用（如 ChatGPT、Claude 的 App），问它&quot;现在几点了&quot;或&quot;帮我算 123×456&quot;。观察它是否先显示&quot;正在调用工具&quot;，再给出答案。体会&quot;模型提议→程序执行→结果回传&quot;的过程。</p>
+<p><strong>电脑任务（10 分钟）</strong>：用 Python 实现一个&quot;当前时间&quot;工具调用。</p>
+<pre><code># 1. 安装依赖：pip install openai
+from openai import OpenAI
+import json
+from datetime import datetime
+
+client = OpenAI()  # 确保已设置 OPENAI_API_KEY 环境变量
+
+# 第一步：声明工具（给模型看的&quot;菜单&quot;）
+tools = [{
+    &quot;type&quot;: &quot;function&quot;,
+    &quot;function&quot;: {
+        &quot;name&quot;: &quot;get_current_time&quot;,
+        &quot;description&quot;: &quot;获取当前日期和时间&quot;,
+        &quot;parameters&quot;: {
+            &quot;type&quot;: &quot;object&quot;,
+            &quot;properties&quot;: {},  # 这个工具不需要参数
+            &quot;required&quot;: []
+        }
+    }
+}]
+
+# 第二步：发消息，模型会&quot;提议&quot;调用工具
+response = client.chat.completions.create(
+    model=&quot;gpt-4o-mini&quot;,
+    messages=[{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;现在几点了？&quot;}],
+    tools=tools
+)
+
+msg = response.choices[0].message
+print(&quot;模型返回的原始内容:&quot;, msg.tool_calls[0].function)
+
+# 第三步：解析参数并执行（参数解析）
+tool_call = msg.tool_calls[0]
+args = json.loads(tool_call.function.arguments)  # 解析 JSON
+result = get_current_time()  # 执行真正的函数
+
+# 第四步：把结果回传给模型
+response2 = client.chat.completions.create(
+    model=&quot;gpt-4o-mini&quot;,
+    messages=[
+        {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;现在几点了？&quot;},
+        msg,  # 模型的工具调用请求
+        {
+            &quot;role&quot;: &quot;tool&quot;,
+            &quot;tool_call_id&quot;: tool_call.id,
+            &quot;content&quot;: result  # 工具执行结果
+        }
+    ],
+    tools=tools
+)
+
+print(&quot;最终回答:&quot;, response2.choices[0].message.content)</code></pre>
+<p>跑通后，你会看到模型先返回一段 JSON 说要调用工具，然后你的代码执行函数，最后模型基于结果给出回答。</p>
+<h2>案例分享</h2>
+<p><strong>要点</strong>：</p>
+<ul>
+<li>一个 SRE（运维工程师）用极低成本替换了价值 12 万美元的保龄球馆计分系统</li>
+<li>证明了硬件 + 软件的&quot;土办法&quot;在特定场景下能吊打商业方案</li>
+<li>AI Agent 在其中的作用是辅助开发，而非核心组件</li>
+</ul>
+<p><strong>案例背景</strong>：一位 SRE（网站可靠性工程师）和家人买下了一座废弃的 8 道保龄球馆。原厂的计分系统报价 12 万美元，对一个小球馆来说太贵了。</p>
+<p><strong>解决什么问题</strong>：用 1600 美元的 ESP32 开发板（一种小型可编程芯片）替换整套商业计分系统，解决了&quot;买不起商用方案&quot;的痛点。</p>
+<p><strong>如何实现</strong>：他用 ESP32 作为核心控制器，自己写了计分逻辑和显示程序。整个过程涉及硬件接线、嵌入式编程、网络通信——AI 工具在这里更多是辅助写代码和调试，具体实现细节见原链接。</p>
+<p><strong>原链接</strong>：https://news.ycombinator.com/item?id=48968606</p>
+<h2>今日动态</h2>
+<ul>
+<li><strong>Linux 网络开发者被 AI Agent 搞到崩溃</strong>（https://www.phoronix.com/news/Linux-7.3-Networking）—— 说明 AI Agent 已经开始大规模涌入开源社区提交代码，但质量参差不齐，给维护者带来巨大负担。这提醒我们：Agent 能干活，但&quot;会干活&quot;和&quot;干好活&quot;之间还有很大距离。</li>
+<li><strong>创始人被自己的 AI Agent 卷到加班</strong>（https://www.wsj.com/tech/ai/ai-agents-startup-work-culture-fa10494d）—— 你养的 Agent 跑得比你快，你只能跑得更快。值得关注的是：Agent 不是减少工作量，而是改变了工作方式。</li>
+</ul>
+<h2>打卡</h2>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m2u11%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m2u11%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E7%BB%99%20Agent%20%E8%A3%85%27%E6%89%8B%27%EF%BC%9A%E5%AE%9E%E7%8E%B0%E7%AC%AC%E4%B8%80%E6%AC%A1%E5%B7%A5%E5%85%B7%E8%B0%83%E7%94%A8&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
