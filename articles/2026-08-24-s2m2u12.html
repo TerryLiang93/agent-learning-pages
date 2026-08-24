@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>手写&#x27;想→做→看&#x27;循环</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段二：动手搭建</span>
+      <h1>手写&#x27;想→做→看&#x27;循环</h1>
+      <div class="meta">2026-08-24 · 第一个 Agent · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>今天我们要亲手写出 Agent 最核心的&quot;大脑回路&quot;：<strong>想→做→看→再想</strong>，这个循环就是所有 AI 助手干活的基本模式。你还会学会怎么让它&quot;停下来&quot;——不然它会一直想下去，就像一个人反复纠结穿什么永远不出门。学完今天，你就能写出一个真正能自主完成小任务的 Agent 了。</p>
+<h2>术语卡片</h2>
+<ul>
+<li><strong>ReAct 循环</strong> —— &quot;Reason + Act&quot;（推理+行动）的缩写。就是让 AI 先想一步（Reason），然后做一个动作（Act），看看结果（Observe），再接着想下一步。像人做菜：看菜谱→切菜→看看切得咋样→再决定下一步。</li>
+<li><strong>while 循环</strong> —— 编程里的&quot;只要条件成立就一直做&quot;的重复结构。比如&quot;只要锅里的水没开，就一直等&quot;。</li>
+<li><strong>终止条件</strong> —— 让循环停下来的判断标准。就像&quot;水开了就关火&quot;，没有这个，程序会永远跑下去。</li>
+</ul>
+<h2>原理精讲</h2>
+<p>想象你是一个&quot;智能体&quot;（Agent），任务是<strong>决定今天穿什么出门</strong>。你的思考过程是这样的：</p>
+<ol>
+<li><strong>想</strong>：今天冷不冷？我得知道天气。</li>
+<li><strong>做</strong>：掏出手机查天气。</li>
+<li><strong>看</strong>：看到&quot;25度，晴&quot;。</li>
+<li><strong>再想</strong>：25度适合穿短袖。</li>
+<li><strong>做</strong>：穿短袖。</li>
+<li><strong>看</strong>：穿好了。</li>
+<li><strong>想</strong>：任务完成，出门。</li>
+</ol>
+<p>这个&quot;想→做→看→再想&quot;的循环，就是 Agent 的核心。在代码里，我们用 <strong>while 循环</strong> 来实现它：</p>
+<pre><code>while 没完成:
+    调用大模型 → 让它&quot;想&quot;下一步做什么
+    执行它说的动作（比如查天气）
+    把结果&quot;看&quot;到（喂回给大模型）</code></pre>
+<p>但有个关键问题：<strong>怎么知道&quot;没完成&quot;？</strong> 这就是<strong>终止条件</strong>。有两种典型的终止方式：</p>
+<ul>
+<li><strong>任务完成</strong>：大模型自己说&quot;我已经知道答案了，任务完成&quot;。</li>
+<li><strong>达到最大步数</strong>：比如最多循环 5 次，不管完没完成都停——防止 AI 陷入死循环。</li>
+</ul>
+<p>打个比方：你让一个实习生去查资料写报告。终止条件就是——他说&quot;写完了&quot;（任务完成），或者你限他 1 小时内必须交（最大步数）。两者缺一不可。</p>
+<h2>动手任务</h2>
+<p><strong>手机任务（5 分钟）</strong>：不用写代码，用你手机上的任意 AI 助手（比如 ChatGPT、文心一言），让它&quot;查一下明天北京的天气，然后告诉我该穿什么&quot;。观察它的过程——你会发现它先调用工具（查天气），看到结果后，再给你穿衣建议。这就是一个手动版的&quot;想→做→看&quot;循环。体会一下：如果它没查天气直接回答，会发生什么？（会瞎编）</p>
+<p><strong>电脑任务（10 分钟）</strong>：写一个最简单的 Agent 循环代码。用 Python，不需要任何第三方库，模拟整个过程。</p>
+<pre><code>import time
+
+# 模拟&quot;大模型思考&quot;函数
+def think(question, context):
+    &quot;&quot;&quot;假装是大模型，根据问题和已有信息决定下一步&quot;&quot;&quot;
+    if &quot;天气&quot; in question and &quot;温度&quot; not in context:
+        return &quot;需要查天气&quot;, &quot;查天气&quot;
+    elif &quot;温度&quot; in context:
+        return &quot;根据温度给建议&quot;, &quot;给建议&quot;
+    else:
+        return &quot;任务完成&quot;, &quot;结束&quot;
+
+# 模拟&quot;执行工具&quot;
+def execute(action):
+    if action == &quot;查天气&quot;:
+        return &quot;北京明天 25 度，晴&quot;   # 假装这是天气 API 返回的
+    elif action == &quot;给建议&quot;:
+        return &quot;25 度适合穿短袖&quot;
+    return &quot;&quot;
+
+# 模拟&quot;观察结果&quot;
+def observe(result):
+    return result
+
+# ===== Agent 主循环 =====
+question = &quot;明天北京穿什么？&quot;
+context = &quot;&quot;          # 记录已经知道的信息
+max_steps = 5         # 终止条件1：最大步数
+step = 0
+
+while True:  # while 循环开始
+    step += 1
+    print(f&quot;--- 第 {step} 步 ---&quot;)
+    
+    # 1. 想：让模型决定下一步
+    reason, action = think(question, context)
+    print(f&quot;想：{reason}&quot;)
+    
+    # 2. 终止条件2：模型说任务完成
+    if action == &quot;结束&quot;:
+        print(&quot;终止：任务完成&quot;)
+        break
+    
+    # 3. 做：执行动作
+    result = execute(action)
+    print(f&quot;做：执行『{action}』，得到：{result}&quot;)
+    
+    # 4. 看：把结果加入上下文
+    context += result + &quot;；&quot;
+    
+    # 5. 终止条件1：超过最大步数
+    if step &gt;= max_steps:
+        print(&quot;终止：达到最大步数&quot;)
+        break
+
+print(f&quot;\n最终结论：{context}&quot;)</code></pre>
+<p>运行后你会看到输出，这就是一个完整的 Agent 循环。试着改一下 <code>max_steps = 2</code>，看看会怎样？再试着把 <code>think</code> 函数里的判断改一改，比如让它永远不说&quot;结束&quot;，看看最大步数怎么兜底。</p>
+<h2>案例分享</h2>
+<p><strong>要点</strong>：</p>
+<ul>
+<li>一个被裁员的 Meta 工程师，用 6 个月从零做出了一款 Steam 上线的游戏</li>
+<li>展示了&quot;一个人 + AI 工具&quot;也能完成过去需要整个团队做的产品</li>
+<li>把危机（被裁员）变成了创作的契机</li>
+</ul>
+<p><strong>案例背景</strong>：这位工程师在 Meta 干了近 10 年（2013-2023），主要做编译器和运行时相关的工作。2023 年春天被裁员后，他没有急着找下一份工作，而是立刻开始做游戏——这是他一直想做但没时间做的事。</p>
+<p><strong>解决什么问题</strong>：解决了&quot;被裁员后如何度过空窗期&quot;和&quot;一个人如何做出一款完整游戏&quot;这两个问题。过去做游戏需要策划、程序、美术、音乐等多角色协作，现在他一个人 + AI 辅助就搞定了。</p>
+<p><strong>如何实现</strong>：他在被裁后立刻开始用 AI 编程工具辅助开发游戏（具体用了哪些工具，详情见原链接）。从 2023 年春天到游戏上线，大约用了 6 个月。游戏在 Steam 上取得了不错的成绩（&quot;minor hit&quot;）。关键是他把 AI 当作&quot;结对程序员&quot;，让它处理重复性代码和查文档等工作，自己专注在游戏设计和核心逻辑上。</p>
+<p><strong>原链接</strong>：https://news.ycombinator.com/item?id=43186406</p>
+<h2>今日动态</h2>
+<ul>
+<li><strong>The Web-Search Latency Your Agent Pays</strong>（https://telem.ai/blog/latency-research）—— 这篇文章讨论 Agent 做一次网络搜索要等多久。这正好呼应今天学的&quot;循环&quot;：Agent 每一步&quot;做&quot;的动作如果太慢，整个循环就会很卡。值得关注，因为它关系到你以后写真实 Agent 时的性能优化。</li>
+</ul>
+<h2>打卡</h2>
+<p>今天完成的标志：能不看教程，独立写出一个带 <code>max_steps</code> 终止条件的 while 循环 Agent 代码，并说清楚两个终止条件分别是什么。</p>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m2u12%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m2u12%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E6%89%8B%E5%86%99%27%E6%83%B3%E2%86%92%E5%81%9A%E2%86%92%E7%9C%8B%27%E5%BE%AA%E7%8E%AF&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
