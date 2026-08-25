@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>用现成框架搭 Agent</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段二：动手搭建</span>
+      <h1>用现成框架搭 Agent</h1>
+      <div class="meta">2026-08-25 · 第一个 Agent · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>今天我们要告别&quot;手写轮子&quot;——之前你从零搭 Agent 的方式，就像自己种小麦做面包。而框架（Framework）就是&quot;面包机&quot;：把常用功能都封装好了，你只需要放好原料、按几个按钮。今天学一个主流框架的核心概念，然后用它配出一个带工具的 Agent，对比一下和手写版的区别。</p>
+<h2>术语卡片</h2>
+<ul>
+<li><strong>Agent 框架</strong> —— 别人写好的&quot;半成品厨房&quot;，锅碗瓢灶都备齐了，你只管按菜谱做菜，不用自己打铁铸锅。</li>
+<li><strong>Agents SDK</strong> —— SDK 就是&quot;软件工具箱&quot;的缩写。Agents SDK 是 OpenAI 官方提供的 Agent 工具箱，里面已经装好了&quot;让 AI 调用工具、记住对话、按流程办事&quot;这些常用零件。</li>
+<li><strong>配置式开发</strong> —— 不写一堆逻辑代码，而是用&quot;填表&quot;的方式告诉程序&quot;你要什么&quot;，程序自动帮你拼装好。就像点外卖：你勾选菜品和口味，后厨自动出餐。</li>
+</ul>
+<h2>原理精讲</h2>
+<p><strong>为什么用框架？</strong></p>
+<p>打个比方：你之前手写 Agent，相当于自己用砖头砌墙。砌一面墙没问题，但你要砌 100 面墙（做 100 个 Agent），每面墙都要重新搬砖、和水泥——太累了。框架就是&quot;预制板&quot;：墙板是工厂做好的，你只管把墙板拼起来，省下大量重复劳动，把精力放在&quot;这面墙放哪、开几个窗户&quot;（也就是你的业务逻辑）上。</p>
+<p><strong>核心概念：Agent、工具、循环</strong></p>
+<p>以 OpenAI Agents SDK 为例，核心就三个词：</p>
+<ol>
+<li><strong>Agent（智能体）</strong> —— 一个&quot;有脑子的工人&quot;。你给它一个名字和一句&quot;岗位说明&quot;（system prompt），它就知道自己是干嘛的。</li>
+<li><strong>Tool（工具）</strong> —— 工人的&quot;双手&quot;。比如&quot;查天气&quot;是一个工具，&quot;算加法&quot;是另一个工具。Agent 脑子不够用时，会调用工具来干活。</li>
+<li><strong>循环（Loop）</strong> —— 工人干活的流程：接到任务 → 想想需要啥工具 → 调用工具 → 拿到结果 → 再想想 → 再调用……直到任务完成。</li>
+</ol>
+<p><strong>配置式开发长什么样？</strong></p>
+<p>手写版你要写：<code>if 用户说查天气 then 调用天气API</code> 这种判断逻辑。配置版你只需要写：</p>
+<pre><code>agent = Agent(
+    name=&quot;天气助手&quot;,
+    instructions=&quot;你是一个天气查询助手，用户问天气时用 get_weather 工具&quot;,
+    tools=[get_weather]
+)</code></pre>
+<p>框架自动帮你处理&quot;什么时候调用工具、调用后怎么把结果给 AI&quot;这些脏活累活。</p>
+<h2>动手任务</h2>
+<p><strong>第一步（手机可做，2 分钟）</strong>：打开 OpenAI 官网的 Agents SDK 文档页（搜索关键词：OpenAI Agents SDK），只看首页的&quot;核心概念&quot;部分，找到 Agent、Tool、Loop 这三个词，截图保存。</p>
+<p><strong>第二步（电脑任务，8 分钟）</strong>：在电脑上装好环境后，跑通第一个框架版 Agent：</p>
+<pre><code># 1. 安装（终端执行）
+pip install openai-agents
+
+# 2. 新建文件 demo.py，粘贴以下代码
+from agents import Agent, Runner
+
+# 定义一个带工具的 Agent —— 工具就是一个普通函数
+def get_weather(city: str) -&gt; str:
+    &quot;&quot;&quot;查天气的假工具，实际项目里这里会调天气 API&quot;&quot;&quot;
+    return f&quot;{city} 今天晴天，25度&quot;
+
+agent = Agent(
+    name=&quot;天气助手&quot;,
+    instructions=&quot;用户问天气时，用 get_weather 工具回答&quot;,
+    tools=[get_weather],
+)
+
+# 3. 运行（终端执行）
+result = Runner.run_sync(agent, &quot;北京天气怎么样？&quot;)
+print(result.final_output)</code></pre>
+<p>跑通了你就发现：手写版你要自己写&quot;判断用户意图→调用函数→拼回答&quot;的循环，框架版只写了三行配置，循环是框架自动完成的。</p>
+<h2>AI 工具箱</h2>
+<p><strong>主题：让 Agent 自己写&quot;使用说明书&quot;——AGENTS.md 的崛起</strong></p>
+<p>【这是什么】最近 GitHub 上最大的 100 个仓库都在往项目里加一个叫 <code>AGENTS.md</code> 的文件。它不是给人看的，是给 AI 编程助手（如 Claude Code）看的&quot;项目使用说明书&quot;。</p>
+<p>【有什么用】AI 代理进到你的代码仓库时，先读这个文件，就知道&quot;这个项目怎么跑、代码风格是什么、有哪些坑别踩&quot;。就像新同事入职第一天，先看部门手册，不用到处问人。</p>
+<p>【怎么用】在你的项目根目录建一个 <code>AGENTS.md</code>，用大白话写清楚：</p>
+<ul>
+<li>项目是干嘛的</li>
+<li>怎么安装依赖、怎么跑测试</li>
+<li>代码风格约定（比如&quot;函数都要写 docstring&quot;）</li>
+<li>常见坑（比如&quot;不要改 config.py，那是自动生成的&quot;）</li>
+</ul>
+<p>【实用例子】你写了一个 Python 工具库，在 <code>AGENTS.md</code> 里写&quot;测试用 pytest 运行，新增功能必须补测试&quot;。下次 AI 助手帮你改代码时，它会自动遵守这条规矩，改完自己跑测试。</p>
+<p>搜索关键词：AGENTS.md best practices</p>
+<h2>今日动态</h2>
+<ul>
+<li><strong>Homebrew 6.0.0 发布</strong>（https://brew.sh/2026/06/11/homebrew-6.0.0/）—— Mac 上装软件必备工具大版本更新，加了沙箱机制更安全。你装 Python 包大概率用过它，值得关注。</li>
+<li><strong>Show HN: 用 ESP32 替换 12 万美元的保龄球馆系统</strong>（https://news.ycombinator.com/item?id=48968606）—— 一个 SRE 用 1600 美元的硬件替换了商业系统，说明很多&quot;专业设备&quot;本质就是传感器+逻辑控制，硬件工程师看了会很有共鸣。</li>
+</ul>
+<h2>打卡</h2>
+<p>完成标准：能说出 OpenAI Agents SDK 的三个核心概念（Agent、Tool、Loop），并跑通上面那个带工具的天气查询 Agent——这就是&quot;用框架搭出的可用 Agent&quot;。</p>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m2u13%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m2u13%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E7%94%A8%E7%8E%B0%E6%88%90%E6%A1%86%E6%9E%B6%E6%90%AD%20Agent&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
