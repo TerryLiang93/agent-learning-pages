@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>用现成框架搭 Agent</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段二：动手搭建</span>
+      <h1>用现成框架搭 Agent</h1>
+      <div class="meta">2026-08-26 · 第一个 Agent · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>昨天我们学了手写一个 Agent 的底层逻辑，今天换个更聪明的玩法：直接用现成框架来搭。就像你焊电路板，不会每次从晶振和电阻开始焊，而是直接用开发板——框架就是 AI 世界的开发板。学完今天，你能说出框架的核心概念，并花 10 分钟搭出一个带工具的可用 Agent。</p>
+<h2>术语卡片</h2>
+<ul>
+<li><strong>Agent 框架</strong> —— 别人写好的&quot;半成品工具箱&quot;，帮你把 Agent 的骨架、循环、工具调用都封装好了，你只管填业务逻辑。</li>
+<li><strong>Agents SDK</strong> —— SDK 是&quot;软件开发工具包&quot;的缩写【术语】，就是官方发的一盒乐高积木，里面有拼一个 Agent 需要的所有标准零件。</li>
+<li><strong>配置式开发</strong> —— 不写一堆代码，而是像填表单一样，用配置文件告诉程序&quot;我要什么&quot;，程序自动帮你组装好。好比点外卖选套餐，而不是自己从买菜开始做。</li>
+</ul>
+<h2>原理精讲</h2>
+<p><strong>为什么要用框架？</strong></p>
+<p>昨天你手写 Agent 时，得自己处理&quot;模型返回 → 判断要不要调工具 → 调工具 → 把结果塞回去 → 再问模型&quot;这个循环。这个循环叫 <strong>Agent 循环</strong>【术语】，是每个 Agent 都少不了的&quot;发动机&quot;。但问题是：这个发动机跟你的业务没关系，每个 Agent 都得装一遍。</p>
+<p>框架干的事就是：把发动机造好、调试好，留几个插口给你。你只需要告诉它&quot;我的 Agent 叫什么、能用哪些工具、系统提示词是什么&quot;，它就把 Agent 给你跑起来。</p>
+<p><strong>框架的核心概念（以 OpenAI Agents SDK 为例）</strong></p>
+<p>框架里就三个核心概念，记住这三个就够用了：</p>
+<ol>
+<li><strong>Agent</strong> —— 就是你的 AI 助手本体，你给它起名字、写性格（系统提示词）、告诉它能用啥工具。</li>
+<li><strong>Tool</strong> —— 工具，就是 Agent 的&quot;手脚&quot;。比如查天气的函数、算数学的函数。在框架里，你只需要把一个普通 Python 函数&quot;注册&quot;成工具，框架自动帮你处理&quot;模型想调它时怎么传参数&quot;这件事。</li>
+<li><strong>Runner</strong> —— 跑腿的。你建好 Agent 后，把任务丢给 Runner，它负责驱动整个 Agent 循环，直到任务完成。</li>
+</ol>
+<p><strong>配置式开发长什么样？</strong></p>
+<p>对比一下昨天手写的代码和今天用框架的代码：</p>
+<p>手写版（昨天）：</p>
+<pre><code># 你得自己写循环、自己处理工具调用的返回格式
+while True:
+    response = model.call(messages)
+    if response.has_tool_call():
+        result = call_tool(response.tool_call)
+        messages.append(result)
+    else:
+        break</code></pre>
+<p>框架版（今天）：</p>
+<pre><code>agent = Agent(
+    name=&quot;助手&quot;,
+    instructions=&quot;你是一个友好的助手&quot;,
+    tools=[get_weather]  # get_weather 就是一个普通函数
+)
+result = Runner.run(agent, &quot;北京今天冷不冷？&quot;)</code></pre>
+<p>看到区别了吗？手写版你得管&quot;循环怎么转&quot;，框架版你只管&quot;Agent 是谁、能用什么工具&quot;。剩下的脏活累活框架全包了。这就是<strong>配置式开发</strong>的精髓——你描述需求，框架负责实现。</p>
+<h2>动手任务</h2>
+<p><strong>手机任务（5 分钟）</strong>：打开浏览器，搜一下&quot;OpenAI Agents SDK 快速入门&quot;或&quot;Python Agents SDK 文档&quot;，看看官方文档首页的示例代码，找出来：</p>
+<ol>
+<li>创建 Agent 用的是哪个类？</li>
+<li>注册工具用的装饰器（以 <code>@</code> 开头的那行）叫什么名字？</li>
+<li>Runner 的 <code>run</code> 方法接收哪两个参数？</li>
+</ol>
+<p>不用理解每行代码，能找出这三个答案就算过关。</p>
+<p><strong>电脑任务（10 分钟）</strong>：如果你电脑上有 Python 环境，按下面步骤搭一个能算数学的 Agent：</p>
+<ol>
+<li>安装框架：</li>
+<pre><code>pip install openai-agents</code></pre>
+</ol>
+<ol>
+<li>新建文件 <code>my_agent.py</code>，粘贴以下代码：</li>
+</ol>
+<pre><code>from agents import Agent, Runner
+import asyncio
+
+# 第 1 步：定义一个普通函数
+def multiply(a: float, b: float) -&gt; float:
+    &quot;&quot;&quot;两个数相乘&quot;&quot;&quot;
+    return a * b
+
+# 第 2 步：把函数注册成工具，塞给 Agent
+agent = Agent(
+    name=&quot;计算助手&quot;,
+    instructions=&quot;你是一个计算器，用户让你算啥你就算啥&quot;,
+    tools=[multiply]  # 直接把函数名放进来就行
+)
+
+# 第 3 步：跑起来
+async def main():
+    result = await Runner.run(agent, &quot;帮我算 12345 × 6789&quot;)
+    print(result.final_output)
+
+asyncio.run(main())</code></pre>
+<ol>
+<li>运行：</li>
+<pre><code>python my_agent.py</code></pre>
+</ol>
+<p>如果看到输出 <code>83810205</code>，恭喜你，你的第一个&quot;框架版 Agent&quot;跑通了！</p>
+<p><strong>对比手写版</strong>：昨天你写 Agent 时，如果想让模型调工具，得自己写 JSON 格式的工具描述、自己解析模型的工具调用请求。今天你只是写了个普通函数 <code>multiply</code>，框架自动帮你生成了工具描述、自动解析调用、自动把结果传回模型。这就是框架省下的重复劳动。</p>
+<h2>AI 工具箱</h2>
+<p><strong>今日干货：Hermes Agent —— 开源 AI Agent 框架</strong></p>
+<p>【这是什么】Hermes Agent 是一个开源的 AI Agent 框架，主打&quot;随着你的使用越来越懂你&quot;。核心特点是 Agent 的记忆和行为会随交互持续进化，而不是每次从零开始。</p>
+<p>【有什么用】对开发者来说，它解决了 Agent 的&quot;个性化&quot;难题——大多数框架每次对话都是&quot;失忆&quot;的，Hermes 让 Agent 能记住你的偏好、习惯，越用越顺手。</p>
+<p>【怎么用】作为开源项目，你可以直接 clone 它的代码库，用 Python 调用它的核心类来构建自己的 Agent。它兼容主流 LLM 接口，不需要额外学一套新东西。</p>
+<p>【实用例子】比如你做一个&quot;代码审查 Agent&quot;，用普通框架每次都得重新告诉它&quot;你偏好简洁风格、讨厌过度设计&quot;。用 Hermes，它会在多次审查中自动学习你的反馈，之后直接按你的口味给建议。搜索关键词：Hermes Agent NousResearch</p>
+<h2>今日动态</h2>
+<ol>
+<li><strong>Hermes Agent 发布</strong> —— 开源 AI Agent 框架，主打&quot;越用越懂你&quot;的持续学习能力。对正在学搭 Agent 的你来说，值得关注它的记忆机制设计，这是 Agent 进阶的重要方向。https://hermes-agent.nousresearch.com</li>
+</ol>
+<ol>
+<li><strong>CaptureAgent</strong> —— 一位国防领域创业者做的 Agent，自动完成政府项目的发现、定价、投标全流程。展示了 Agent 在真实业务场景中&quot;一条龙&quot;干活的样子，和你今天学的&quot;Agent + 工具&quot;模式一脉相承。https://captureagent.us/</li>
+</ol>
+<h2>打卡</h2>
+<p>今天完成的标准：能说出 OpenAI Agents SDK 的三个核心概念（Agent、Tool、Runner）分别干什么，并且跑通了框架版的计算 Agent——对比手写版，你能指出框架替你省掉了哪部分工作。</p>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m2u13%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m2u13%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E7%94%A8%E7%8E%B0%E6%88%90%E6%A1%86%E6%9E%B6%E6%90%AD%20Agent&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
