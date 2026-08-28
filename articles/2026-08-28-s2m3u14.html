@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>给 Agent 加记忆：向量数据库入门</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段二：动手搭建</span>
+      <h1>给 Agent 加记忆：向量数据库入门</h1>
+      <div class="meta">2026-08-28 · 让 Agent 更聪明 · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>今天学的是<strong>怎么给 Agent 加“记忆”</strong>。核心思路是：把文字变成一串数字（向量），让意思相近的文字在数字空间里“离得近”，然后 Agent 就能快速找到“跟当前问题最相关”的历史内容。你会亲手跑通一个带记忆的示例，理解“嵌入”和“相似度检索”这两个词到底在说什么。</p>
+<h2>术语卡片</h2>
+<ul>
+<li><strong>嵌入（Embedding）</strong> —— 把一段文字（比如一句话）转换成一串固定长度的数字（比如 384 个数字）。这串数字能“概括”这句话的意思，就像给一句话拍了一张“语义照片”。</li>
+<li><strong>向量（Vector）</strong> —— 就是那串数字本身。可以想象成高维空间里的一个点。两个向量的“距离”越近，表示两句话的意思越接近。</li>
+<li><strong>相似度检索（Similarity Search）</strong> —— 给定一个查询向量，从一堆向量里找出“距离最近”的那几个。就像你在手机通讯录里搜“老王”，系统按拼音/笔画相似度把最接近的联系人列出来。</li>
+</ul>
+<h2>原理精讲</h2>
+<p><strong>为什么文字能变成数字？</strong></p>
+<p>你不需要理解神经网络内部怎么算的，只需要知道：有一个模型（比如 <code>all-MiniLM-L6-v2</code>），你给它输入“今天天气真不错”，它会输出一个 384 维的向量。你再输入“阳光明媚适合出门”，输出的向量会和前一个<strong>非常接近</strong>（距离小）。但你输入“我肚子饿了”，输出的向量就离得远。</p>
+<p><strong>这是怎么做到的？</strong> 训练这个模型时，喂了大量“意思相近的句子对”，模型学会了把同义句映射到相近的位置。这就像你给每个朋友拍了一张“脸部特征向量”（眼睛大小、脸型、肤色），长相相似的人特征向量就接近。</p>
+<p><strong>向量数据库干什么用？</strong></p>
+<p>假设你存了 10 万条笔记。用户问“上次讨论的电源方案是什么”，你不可能把 10 万条笔记全部发给大模型（太贵太慢）。正确做法是：</p>
+<ol>
+<li>把用户的问题也转成向量。</li>
+<li>在向量数据库里快速找到“距离最近”的 3~5 条笔记。</li>
+<li>只把这 3~5 条笔记发给大模型，让它基于这些内容回答。</li>
+</ol>
+<p><strong>向量数据库</strong>就是专门干这个的——它用特殊索引结构（如 HNSW），能在几毫秒内从上百万个向量里找到最近的几个。普通数据库按关键词匹配做不到“语义相似”，比如你搜“电源方案”，它找不到“供电设计”这条笔记，但向量检索可以。</p>
+<h2>动手任务</h2>
+<p><strong>手机任务（5 分钟）</strong>：打开浏览器访问 https://huggingface.co/spaces/mteb/leaderboard （文本嵌入榜单）。随便点一个模型，看它的“维度”和“平均分数”。感受一下：不同模型输出的向量长度不一样（384、768、1536 等），分数越高表示“语义理解能力越强”。不用看懂细节，只需要知道“嵌入模型有很多种，效果有差异”。</p>
+<hr>
+<p><strong>电脑任务（10 分钟）</strong>：跑通一个带记忆的示例。</p>
+<p><strong>步骤 1</strong>：安装依赖（在终端执行）：</p>
+<pre><code>pip install chromadb sentence-transformers</code></pre>
+<p><strong>步骤 2</strong>：创建 <code>memory_demo.py</code>，粘贴以下代码：</p>
+<pre><code>from sentence_transformers import SentenceTransformer
+import chromadb
+
+# 1. 加载嵌入模型（把文字变成向量）
+model = SentenceTransformer(&#x27;all-MiniLM-L6-v2&#x27;)
+
+# 2. 创建向量数据库（本地文件存储）
+client = chromadb.PersistentClient(path=&quot;./my_memory&quot;)
+collection = client.get_or_create_collection(&quot;notes&quot;)
+
+# 3. 存入几条“笔记”（带 ID）
+notes = [
+    &quot;用户喜欢简洁的回答，不要长篇大论&quot;,
+    &quot;项目使用 RK3588 平台，双摄像头方案&quot;,
+    &quot;用户是硬件工程师，软件基础偏弱&quot;,
+]
+collection.add(
+    documents=notes,
+    ids=[&quot;note1&quot;, &quot;note2&quot;, &quot;note3&quot;]
+)
+
+# 4. 模拟用户提问：语义检索
+query = &quot;做嵌入式开发的人有什么特点？&quot;
+results = collection.query(query_texts=[query], n_results=2)
+
+print(&quot;问题：&quot;, query)
+print(&quot;找到的相关笔记：&quot;)
+for doc, dist in zip(results[&#x27;documents&#x27;][0], results[&#x27;distances&#x27;][0]):
+    print(f&quot;  - {doc} (距离: {dist:.4f})&quot;)</code></pre>
+<p><strong>步骤 3</strong>：运行 <code>python memory_demo.py</code>，观察输出。你会看到“用户是硬件工程师，软件基础偏弱”被检索出来（距离最小），尽管问题里没有“硬件”这个词——这就是语义检索。</p>
+<p><strong>步骤 4（进阶）</strong>：把 <code>n_results</code> 改成 1，再运行一次，看看只返回最相关的一条是什么。</p>
+<h2>AI 工具箱</h2>
+<p><strong>今日推荐：用 ChromaDB 给 Agent 加长期记忆</strong></p>
+<p><strong>【这是什么】</strong> ChromaDB 是一个轻量级向量数据库，Python 直接调用，无需部署服务器。配合 <code>sentence-transformers</code> 嵌入模型，十几行代码就能给 Agent 加上“记忆”。</p>
+<p><strong>【有什么用】</strong> 让 Agent 能记住项目背景、用户偏好、历史决策。下次对话时先查记忆库，再回答，而不是每次都“从零开始”。</p>
+<p><strong>【怎么用】</strong></p>
+<ol>
+<li>装库：<code>pip install chromadb sentence-transformers</code></li>
+<li>创建集合（类似数据库表）：<code>collection = client.get_or_create_collection(&quot;project_memory&quot;)</code></li>
+<li>写入记忆：<code>collection.add(documents=[&quot;...&quot;], ids=[&quot;id1&quot;])</code></li>
+<li>查询：<code>collection.query(query_texts=[&quot;当前问题&quot;], n_results=3)</code></li>
+</ol>
+<p><strong>【实用例子】</strong> 你正在做一个 RK3588 双摄像头项目，每天结束前把当天的关键决策存进 ChromaDB（比如“IMX219 摄像头 I2C 地址是 0x10”）。第二天问 Agent“摄像头地址是多少”，它能直接从记忆库检索出来，不用你再翻聊天记录。</p>
+<p>搜索关键词：<code>chromadb quickstart</code>、<code>sentence-transformers usage</code></p>
+<h2>今日动态</h2>
+<ul>
+<li><strong>Homebrew 6.0.0 发布</strong> —— 这是 macOS 上最常用的包管理工具，6.0 引入了新的 tap 信任安全机制和更快的内部 JSON API。如果你用 Mac 开发，升级后 <code>brew install</code> 会更快更安全。链接：https://brew.sh/2026/06/11/homebrew-6.0.0/</li>
+<li><strong>RK3588 双摄像头 AI 感知系统开源</strong>（⭐50）—— 在 RK3588 上跑 YOLOv5s + UNet，带 OpenCL GPU 加速的镜头畸变校正。和今天的向量数据库无关，但如果你是做嵌入式视觉的，这个项目值得收藏参考。链接：https://github.com/MUJI0807/RK3588-Dual-Camera-AI-Perception-System</li>
+</ul>
+<h2>打卡</h2>
+<p>完成标准：能用自己的话说出“嵌入就是把文字变成向量，意思相近的向量距离近；向量数据库就是快速找最近向量的工具”，并成功运行上面的 <code>memory_demo.py</code> 看到语义检索结果。</p>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m3u14%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m3u14%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E7%BB%99%20Agent%20%E5%8A%A0%E8%AE%B0%E5%BF%86%EF%BC%9A%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%85%A5%E9%97%A8&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
