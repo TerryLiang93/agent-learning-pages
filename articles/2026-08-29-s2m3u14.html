@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>给 Agent 加记忆：向量数据库入门</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段二：动手搭建</span>
+      <h1>给 Agent 加记忆：向量数据库入门</h1>
+      <div class="meta">2026-08-29 · 让 Agent 更聪明 · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>昨天我们讲了给 Agent 加记忆的思路，今天来落地。核心就三件事：把文字变成数字（嵌入）、让意思相近的文字数字也相近（相似度检索）、用专门的数据库存这些数字（向量数据库）。学完今天，你就能让 Agent&quot;记得&quot;之前聊过什么，并且能按意思找到相关的内容——不是靠关键词，而是靠语义。</p>
+<h2>术语卡片</h2>
+<ul>
+<li><strong>嵌入（Embedding）</strong> —— 把一段文字（比如一个词、一句话）变成一串数字。这串数字就像文字的&quot;身份证号&quot;，但特殊之处在于：意思相近的文字，身份证号也长得像。</li>
+<li><strong>向量</strong> —— 就是那串数字，一般写成 <code>[0.12, -0.45, 0.78, ...]</code> 这种形式。你可以把它想象成高维空间里的一个点，或者一根箭头的方向和长度。</li>
+<li><strong>相似度检索</strong> —— 在数据库里找&quot;哪个向量跟我要找的向量最接近&quot;。接近 = 意思相近，不是字面相同。</li>
+<li><strong>向量数据库</strong> —— 专门用来存向量、并能快速做相似度检索的数据库。普通的 SQL 数据库也能存向量，但查起来很慢，向量数据库是专门为这个场景优化的。</li>
+</ul>
+<h2>原理精讲</h2>
+<p><strong>先理解嵌入：文字 → 数字</strong></p>
+<p>想象你在一个城市里，每个词是一个地点。&quot;苹果&quot;和&quot;香蕉&quot;离得近，&quot;苹果&quot;和&quot;汽车&quot;离得远。嵌入要做的事，就是把每个词（或句子）放到这个&quot;城市&quot;的某个位置。这个位置就是一组数字（向量）。</p>
+<p>怎么做到的呢？简单说：用一个训练好的 AI 模型，它读过海量文本，学会了&quot;哪些词经常一起出现、出现在相似语境中&quot;。它给每个词算出一组数字，让意思相近的词数字也相近。</p>
+<p>比如：</p>
+<ul>
+<li>&quot;我想吃苹果&quot; → <code>[0.12, -0.33, 0.56, ...]</code></li>
+<li>&quot;我想吃香蕉&quot; → <code>[0.13, -0.31, 0.55, ...]</code> ← 跟上面很接近</li>
+<li>&quot;今天天气不错&quot; → <code>[-0.42, 0.87, 0.10, ...]</code> ← 离得很远</li>
+</ul>
+<p><strong>再理解相似度检索：找最近的邻居</strong></p>
+<p>有了向量之后，&quot;找意思相近的内容&quot;就变成了&quot;找数字最接近的向量&quot;。计算两个向量有多接近，常用&quot;余弦相似度&quot;——你可以简单理解成：看两根箭头指向的方向是否一致。方向一致 = 相似度高，夹角越大 = 越不相关。</p>
+<p><strong>向量数据库：专门干这个的仓库</strong></p>
+<p>普通数据库（比如 MySQL）查数据是按条件匹配，比如 <code>WHERE title = &#x27;苹果&#x27;</code>。但向量数据库是&quot;给我找跟这个向量最像的 5 个&quot;，它内部用了一些高级算法（比如 HNSW）把向量组织成特殊结构，查起来飞快。</p>
+<p><strong>生活化类比</strong>：嵌入 = 把每个人按性格放到一个&quot;性格空间&quot;里（爱聊天的在一堆，爱安静的在一堆）。向量数据库 = 一个巨大的&quot;性格地图&quot;，你想找&quot;跟我性格最像的人&quot;，它直接在地图上画个圈，把圈里的人给你。</p>
+<p><strong>给 Agent 加记忆的流程</strong>：</p>
+<ol>
+<li>用户说了一句话，先用嵌入模型把这句话变成向量</li>
+<li>把这个向量存进向量数据库（同时存原文）</li>
+<li>下次用户提问时，把问题也变成向量</li>
+<li>去向量数据库里找最接近的向量，把对应的原文拿出来</li>
+<li>把原文和问题一起丢给大模型，让它基于这些&quot;记忆&quot;来回答</li>
+</ol>
+<h2>动手任务</h2>
+<p><strong>手机任务（约 5 分钟）</strong>：打开任意一个 AI 对话 App（比如 ChatGPT、Claude、Kimi），跟它说：&quot;我给你三句话，你帮我判断哪两句意思最接近：&#x27;今天好热&#x27;、&#x27;外面温度很高&#x27;、&#x27;我想吃冰淇淋&#x27;。&quot;看它怎么回答。这能帮你直观感受&quot;语义相似&quot;是什么。</p>
+<p><strong>电脑任务（约 10 分钟）</strong>：用 Python 跑一个带记忆的 Agent 示例。</p>
+<p>步骤：</p>
+<ol>
+<li>安装依赖：</li>
+<pre><code>pip install openai chromadb</code></pre>
+<li>写一个脚本 <code>memory_agent.py</code>：</li>
+<pre><code>import chromadb
+from openai import OpenAI
+
+# 初始化客户端（假设你本地有 OpenAI 兼容的 API，比如 Ollama 或 vLLM）
+client = OpenAI(base_url=&quot;http://localhost:11434/v1&quot;, api_key=&quot;ollama&quot;)  # 用 Ollama 举例
+
+# 初始化向量数据库（内存模式，不用装服务）
+chroma = chromadb.Client()
+col = chroma.create_collection(&quot;my_memory&quot;)
+
+def add_memory(text):
+    &quot;&quot;&quot;把一段话存入记忆&quot;&quot;&quot;
+    # 1. 嵌入：把文字变成向量
+    emb = client.embeddings.create(model=&quot;nomic-embed-text&quot;, input=text).data[0].embedding
+    # 2. 存入向量数据库
+    col.add(ids=[f&quot;mem_{len(col.get()[&#x27;ids&#x27;])}&quot;], embeddings=[emb], documents=[text])
+
+def recall(query, top_k=2):
+    &quot;&quot;&quot;根据问题，检索最相关的记忆&quot;&quot;&quot;
+    emb = client.embeddings.create(model=&quot;nomic-embed-text&quot;, input=query).data[0].embedding
+    results = col.query(query_embeddings=[emb], n_results=top_k)
+    return results[&quot;documents&quot;][0]
+
+# 存几条记忆
+add_memory(&quot;用户叫小明，喜欢喝美式咖啡&quot;)
+add_memory(&quot;用户上周说项目延期了，很焦虑&quot;)
+add_memory(&quot;用户养了一只叫旺财的狗&quot;)
+
+# 问一个问题，让 Agent 基于记忆回答
+question = &quot;我最近心情不好，你还记得为什么吗？&quot;
+memories = recall(question)
+print(&quot;找到的相关记忆：&quot;, memories)
+
+# 把记忆和问题一起发给大模型
+resp = client.chat.completions.create(
+    model=&quot;qwen2.5:7b&quot;,
+    messages=[
+        {&quot;role&quot;: &quot;system&quot;, &quot;content&quot;: f&quot;你是一个有记忆的助手。以下是你之前的记忆：\n{memories}\n请基于这些记忆回答用户。&quot;},
+        {&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: question}
+    ]
+)
+print(&quot;Agent 回答：&quot;, resp.choices[0].message.content)</code></pre>
+<li>运行：<code>python memory_agent.py</code></li>
+</ol>
+<p>如果本地没有 Ollama，也可以把 <code>base_url</code> 改成任意 OpenAI 兼容服务的地址。核心逻辑是：存的时候先嵌入再入库，查的时候先嵌入再检索，最后把检索结果喂给大模型。</p>
+<h2>AI 工具箱</h2>
+<p><strong>主题：Homebrew 6.0.0 发布（AI 时代的包管理更新）</strong></p>
+<p>【这是什么】Homebrew 是 macOS/Linux 上最流行的软件包管理器，相当于&quot;手机应用商店&quot;，但装的是命令行工具。6.0.0 是最新大版本。</p>
+<p>【有什么用】对 AI 开发者来说，装 Python、Node、各种 CLI 工具都靠它。新版本有两个关键改进：一是新的安全机制（tap trust），装第三方软件源更安全；二是默认 JSON API 更快更小，装包速度明显提升。</p>
+<p>【怎么用】升级命令：<code>brew update &amp;&amp; brew upgrade</code>。新装用户直接 `</p>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m3u14%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m3u14%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E7%BB%99%20Agent%20%E5%8A%A0%E8%AE%B0%E5%BF%86%EF%BC%9A%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E5%85%A5%E9%97%A8&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
