@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>阶段二自测：搭一个&#x27;天气助手&#x27;Agent</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段二：动手搭建</span>
+      <h1>阶段二自测：搭一个&#x27;天气助手&#x27;Agent</h1>
+      <div class="meta">2026-08-30 · 让 Agent 更聪明 · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>今天是你阶段二的大考——不学新东西，把前面学的串起来，独立搭一个&quot;天气助手&quot;Agent。这个助手能听懂你问天气、自己去调天气 API 拿数据、再根据温度给你穿衣建议。关键是：遇到报错或者 API 返回异常时，它能自己发现问题、换个方式再试，而不是直接摆烂。<strong>综合实践</strong>就是把零散知识点拧成一股绳的过程，就像考驾照路考——不是考你踩油门多熟练，而是考你能不能独立开完整段路。</p>
+<h2>术语卡片</h2>
+<ul>
+<li><strong>综合实践</strong> —— 把之前分开学的每个小技能（调 API、写循环、处理报错）合在一起，独立完成一个完整的小项目。就像学做菜，前面学切菜、学调味、学火候，今天要自己独立做出一盘完整的菜。</li>
+<li><strong>API 返回异常</strong> —— 天气服务那边返回的数据不是我们期望的样子，比如字段缺失、格式不对、或者直接报错。就像你打电话问朋友天气，朋友没接电话，或者接了但说&quot;我不知道&quot;。</li>
+<li><strong>自我修正</strong> —— Agent 发现第一次尝试失败了，能自己分析原因、换个方法再试一次，而不是直接放弃或给出错误答案。就像你发消息没发出去，会自动检查是没网还是号码错了，然后重试。</li>
+</ul>
+<h2>原理精讲</h2>
+<p>天气助手本质上就是一个&quot;听问题 → 想怎么做 → 动手做 → 看结果 → 不行就换个法子&quot;的循环。</p>
+<p>想象你让一个实习生去查今天天气并告诉你穿什么。他的工作流程是：</p>
+<ol>
+<li><strong>听懂需求</strong>：你问&quot;北京今天穿啥&quot;，他明白要查北京天气。</li>
+<li><strong>选工具</strong>：他知道自己有个天气查询工具，输入城市名就能拿到温度、天气状况。</li>
+<li><strong>调用工具</strong>：他把&quot;北京&quot;传给工具，工具返回一堆数据——温度 32°C、晴天、湿度 60%。</li>
+<li><strong>加工回答</strong>：他根据 32°C 判断&quot;热，穿短袖短裤，注意防晒&quot;。</li>
+<li><strong>异常处理</strong>：如果工具报错&quot;城市不存在&quot;或者返回空数据，他得自己判断——是城市名打错了？还是网络问题？然后换个写法重试，或者告诉用户&quot;这个城市我查不到&quot;。</li>
+</ol>
+<p>你之前已经分别学过：怎么定义工具（函数）、怎么让模型决定调用哪个工具（function calling）、怎么写循环让 Agent 多次调用工具。今天就是把它们组装成完整的循环，并且加上&quot;异常处理&quot;这一环——这是之前没系统练过的。</p>
+<p>核心就一句话：<strong>Agent = 循环 + 工具 + 异常处理</strong>。没有异常处理，你的 Agent 就像没有安全气囊的车，平时能开，一撞就废。</p>
+<h2>动手任务</h2>
+<h3>手机任务（5 分钟）：画流程图</h3>
+<p>打开手机备忘录或白纸，画一个天气助手的工作流程图。从用户输入开始，到最终输出穿衣建议结束。<strong>重点标注</strong>：在&quot;调用天气 API&quot;这一步之后，分两条分支——成功怎么走、失败怎么走（失败后怎么办？重试？换参数？还是告诉用户查不到？）。画完看一眼，你的流程是不是一个闭环？</p>
+<h3>电脑任务（10 分钟）：搭天气助手</h3>
+<p><strong>准备</strong>：用你之前搭过的 Agent 框架（LangChain 或直接调 OpenAI API 都行），需要一个免费的天气 API。推荐用 <code>wttr.in</code>，不需要 API key，直接请求 <code>https://wttr.in/北京?format=j1</code> 就能拿到 JSON 格式天气数据。</p>
+<p><strong>步骤</strong>：</p>
+<ol>
+<li><strong>定义工具函数</strong> <code>get_weather(city: str) -&gt; dict</code>：调用 wttr.in，把返回的 JSON 解析成 <code>{&quot;温度&quot;: &quot;32&quot;, &quot;天气&quot;: &quot;晴&quot;, &quot;湿度&quot;: &quot;60&quot;}</code> 这样的字典。如果请求失败或返回空，<strong>不要直接返回错误，而是返回 <code>{&quot;error&quot;: &quot;查询失败&quot;}</code></strong>。</li>
+<li><strong>写主循环</strong>：接收用户输入 → 让 LLM 决定是否调用 <code>get_weather</code> → 如果有工具调用，执行并把结果返回给 LLM → LLM 生成最终穿衣建议。</li>
+<li><strong>加异常处理</strong>：如果 <code>get_weather</code> 返回了 <code>error</code> 字段，把这个错误信息喂回给 LLM，让它决定怎么办——比如换个城市名格式重试一次，或者直接告诉用户&quot;这个城市暂时查不到&quot;。</li>
+<li><strong>测试这三个场景</strong>：</li>
+</ol>
+<ul>
+<li>正常：输入&quot;北京今天穿什么？&quot; → 应该返回温度 + 穿衣建议</li>
+<li>边界：输入&quot;火星今天穿什么？&quot; → 应该给出合理回应（查不到 / 建议穿宇航服，都算对）</li>
+<li>异常：故意把城市名写成空字符串 → Agent 应该能自己发现问题并修正</li>
+</ul>
+<p><strong>记录</strong>：把你在测试中遇到的问题和怎么解决的写下来，这就是你今天的&quot;踩坑笔记&quot;。</p>
+<h2>AI 工具箱</h2>
+<p><strong>主题：为什么&quot;别把 AI Agent 当员工&quot;是给开发者最重要的提醒</strong></p>
+<p>【这是什么】HBR 最近发了一篇研究，标题就一句话：别把 AI Agent 当员工对待。这不是哲学讨论，是工程建议。</p>
+<p>【为什么值得看】我们做 Agent 的时候，特别容易犯一个错——觉得它&quot;应该像人一样能随机应变&quot;。但实际上，Agent 没有常识、没有责任感、不会&quot;尽力而为&quot;。你如果按照管理员工的方式去设计 Agent（给个模糊目标让它自己发挥），结果大概率是灾难。</p>
+<p>【核心要点】设计 Agent 时，把每个步骤都拆到最细、每步都给明确指令和兜底方案。就像你刚才搭天气助手——你不能说&quot;你去帮我查天气吧&quot;，而是要说&quot;调用这个函数，传这个参数，如果返回 error 就重试一次，再失败就告诉用户查不到&quot;。Agent 不需要你像对员工那样信任它，它需要你像对机器那样精确地控制它。</p>
+<p>搜索关键词：HBR Why You Shouldn&#x27;t Treat AI Agents Like Employees</p>
+<h2>今日动态</h2>
+<ul>
+<li><strong>Homebrew 6.0.0 发布</strong>（https://brew.sh/2026/06/11/homebrew-6.0.0/）—— 如果你在 Mac 上开发，Homebrew 就是你的&quot;软件管家&quot;。6.0 大版本更新了安全机制和性能，值得升级。对 Agent 开发者来说，装依赖更快更安全，间接提升开发体验。</li>
+<li><strong>Simurg：给 AI Agent 用的免费联网搜索，号称能&quot;遏制幻觉&quot;</strong>（https://pypi.org/project/simurg/）—— 你的天气助手以后如果要支持&quot;明天呢&quot;&quot;后天呢&quot;这种多轮对话，可能就需要联网搜索能力。这个工具值得关注，后面做更复杂的 Agent 时可能用得上。</li>
+</ul>
+<h2>打卡</h2>
+<p>今天完成的标准：天气助手能正确调用工具、回答合理、异常时能自我修正——跑通上面三个测试场景，并把遇到的问题和解决过程记录下来了。</p>
+<hr>
+<h2>本周回顾</h2>
+<p><strong>过去 7 天你学了什么：</strong></p>
+<ul>
+<li><strong>阶段二核心技能</strong>：从理解 Agent 的基本运行原理（模型 + 工具 + 循环），到学会定义工具、让模型自主决定调用工具（function calling）、再到写多轮循环让 Agent 能连续执行多个步骤。这就像从&quot;会点火&quot;到&quot;会挂挡&quot;到&quot;</li>
+</ul>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m3u15%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s2m3u15%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E9%98%B6%E6%AE%B5%E4%BA%8C%E8%87%AA%E6%B5%8B%EF%BC%9A%E6%90%AD%E4%B8%80%E4%B8%AA%27%E5%A4%A9%E6%B0%94%E5%8A%A9%E6%89%8B%27Agent&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
