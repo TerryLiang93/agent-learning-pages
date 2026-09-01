@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>多 Agent 协作：分工与沟通</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段三：工程化与进阶</span>
+      <h1>多 Agent 协作：分工与沟通</h1>
+      <div class="meta">2026-09-01 · 协作与质量 · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>今天学的是“多 Agent 协作”——就是让多个 AI 各管一摊活儿，像公司里不同部门配合一样。你作为硬件工程师，以后大概率会遇到“让 AI 帮我写代码 + 查手册 + 做测试”这种组合需求，单靠一个 AI 对话窗口搞不定。学会给 AI 分工，比让一个 AI 干所有事更靠谱、更高效。</p>
+<h2>术语卡片</h2>
+<ul>
+<li><strong>多 Agent</strong> —— 多个 AI 程序同时干活，各干各的，互相配合。就像你公司里硬件组、软件组、测试组各管一摊。</li>
+<li><strong>编排</strong> —— 一个“总指挥”负责把任务拆开、分给不同 AI、再把结果汇总。就像项目经理派活。</li>
+<li><strong>主从模式</strong> —— 一个“老大”AI 管着几个“小弟”AI，老大不干具体活，只负责分配和验收。就像组长自己不写代码，只管分任务。</li>
+<li><strong>消息传递</strong> —— AI 之间互相传话/传数据，比如 A 把结果发给 B 当输入。就像同事之间发邮件交接工作。</li>
+</ul>
+<h2>原理精讲</h2>
+<p><strong>为什么需要多个 Agent？</strong></p>
+<p>一个 AI 就像一个人，能力再强也有局限。比如你让一个 AI 帮你写嵌入式代码，它既要懂硬件寄存器、又要懂 C 语言、还要懂编译错误——全塞给它，它容易“精神分裂”，回答质量下降。分开来：一个专查芯片手册、一个专写代码、一个专查编译报错，各干各的，质量更高。</p>
+<p><strong>三种常见模式</strong></p>
+<ol>
+<li><strong>主管分配（主从模式）</strong>：一个“主管”AI 负责理解你的需求，拆成小任务，分给几个“专员”AI，最后汇总。适合任务复杂、需要多步骤的。</li>
+</ol>
+<ol>
+<li><strong>专家各管一块</strong>：几个 AI 没有上下级，各管一个专业领域，最后把结果拼起来。比如一个管硬件选型、一个管代码、一个管测试用例。</li>
+</ol>
+<ol>
+<li><strong>流水线传递（消息传递）</strong>：A 干完传给 B，B 干完传给 C，像工厂流水线。比如 AI 1 写代码 → AI 2 做代码审查 → AI 3 跑测试。</li>
+</ol>
+<p><strong>沟通成本与失控风险</strong></p>
+<p>人越多协调越难，AI 也一样。多个 Agent 之间传话会出错、会误解、会重复干活。所以原则是：<strong>能一个 AI 干完的别硬拆</strong>，只有任务确实复杂才上多 Agent。而且一定要有个“总指挥”来兜底，否则容易乱套。</p>
+<h2>动手任务</h2>
+<p><strong>手机任务（约 5 分钟）</strong></p>
+<p>打开任意 AI 助手（比如 ChatGPT、Kimi、豆包），做这个练习：</p>
+<ol>
+<li>输入：“我要做一个用 ESP32 读取温度传感器的项目。请扮演三个角色：A 是硬件工程师负责选型和接线，B 是嵌入式软件工程师负责写代码，C 是测试工程师负责列测试清单。请按 A → B → C 的顺序依次输出各自负责的内容。”</li>
+</ol>
+<ol>
+<li>观察 AI 如何“扮演”三个角色，输出是否清晰。</li>
+</ol>
+<ol>
+<li>然后追加一句：“现在请把 C 的测试清单发给 B，让 B 根据测试清单修改代码。”——这就是最简单的消息传递。</li>
+</ol>
+<p><strong>电脑任务（约 5 分钟）</strong></p>
+<p>如果你电脑上装了 Claude Code 或 Cursor 这类工具，试一下：</p>
+<ol>
+<li>让一个 Agent 生成一段 C 代码（比如 LED 闪烁）。</li>
+<li>再让另一个 Agent 审查这段代码，指出问题。</li>
+<li>第三个 Agent 根据审查意见改代码。</li>
+</ol>
+<p>如果没装这些工具，就用手机上的 AI 助手模拟这个过程，效果一样。</p>
+<h2>AI 工具箱</h2>
+<p><strong>Saccade —— 给 AI Agent 装“眼睛”的浏览器插件</strong></p>
+<p>【这是什么】一个开源的浏览器插件，让 AI Agent 能“实时看到”网页内容的变化，而不是慢吞吞地一遍遍刷新页面。</p>
+<p>【有什么用】现在的 AI Agent 操作网页时，经常要反复加载页面才能获取最新内容，非常慢。Saccade 相当于给 Agent 装了一个“实时监控摄像头”，页面一变它立刻知道，不用反复刷新。这解决了 Agent 最大的痛点之一——<strong>慢</strong>。</p>
+<p>【怎么用】在 Chrome 或 Edge 浏览器装这个插件，它会给 AI Agent 提供一个“实时语义视图”接口，Agent 可以直接读取页面的最新状态。</p>
+<p>【实用例子】想象你让 AI Agent 帮你盯着某个芯片的价格页面，价格一变它就通知你。没有 Saccade 时，Agent 得每几秒刷新一次页面；有了它，页面一更新 Agent 立刻知道，又快又省资源。</p>
+<p>搜索关键词：Saccade semantic browser AI agent</p>
+<h2>今日动态</h2>
+<ul>
+<li><strong>Show HN: Saccade – Live semantic browser truth for AI agents</strong> —— 值得关注，它解决的是 AI Agent 操作网页时“慢”这个老大难问题，对以后做多 Agent 协作很有用。链接：https://github.com/nanlogic/saccade</li>
+</ul>
+<ul>
+<li><strong>Open Agent Forum – a signed public square for agents</strong> —— AI Agent 之间互相通信的公共广场，是“多 Agent 消息传递”的实战案例。链接：https://openagentforum.com/</li>
+</ul>
+<h2>打卡</h2>
+<p>你能设计一个多 Agent 分工方案，说清楚谁是主管、谁是专家、谁先干谁后干、结果怎么汇总——就算完成今天的任务。</p>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s3m1u16%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s3m1u16%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E5%A4%9A%20Agent%20%E5%8D%8F%E4%BD%9C%EF%BC%9A%E5%88%86%E5%B7%A5%E4%B8%8E%E6%B2%9F%E9%80%9A&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
