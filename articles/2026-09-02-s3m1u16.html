@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>多 Agent 协作：分工与沟通</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段三：工程化与进阶</span>
+      <h1>多 Agent 协作：分工与沟通</h1>
+      <div class="meta">2026-09-02 · 协作与质量 · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>今天学的是多 Agent 协作——说白了就是让好几个 AI 一起干活，像公司里一个项目组分给不同的人做。你不需要会写代码，重点是理解&quot;为什么要拆分&quot;&quot;谁来指挥谁&quot;&quot;消息怎么传&quot;。学完今天，你能设计一个简单的多 Agent 分工方案，说清楚每个 Agent 干什么、听谁的。</p>
+<h2>术语卡片</h2>
+<ul>
+<li><strong>多 Agent</strong> —— 多个 AI 程序同时工作，各管一段，合起来完成一个大任务。就像工地上的塔吊、钢筋工、瓦工，不是一个全能工人在干所有事。</li>
+<li><strong>编排</strong> —— 由一个&quot;总指挥&quot;决定哪个 Agent 先干活、干完传给谁、谁的结果需要合并。就像项目经理排工序。</li>
+<li><strong>主从模式</strong> —— 一个&quot;主管&quot; Agent 负责拆任务、发指令、收结果，其他&quot;从属&quot; Agent 只干活不决策。类似组长带组员。</li>
+<li><strong>消息传递</strong> —— Agent 之间互相传数据/指令的方式，相当于同事之间发工作交接单。</li>
+</ul>
+<h2>原理精讲</h2>
+<p><strong>为什么一个 AI 不够用？</strong> 想象你让一个实习生独立做一个完整的产品：调研、设计、写代码、测试、写文档。他要么做得很浅，要么某一块特别强其他很弱。多个 Agent 的道理一样：一个擅长写代码、一个擅长查资料、一个擅长检查错误，各干各的强项，整体质量更高。</p>
+<p><strong>三种常见协作模式</strong>（用做饭打比方）：</p>
+<ol>
+<li><strong>主管分配（主从模式）</strong>：你（用户）是老板，主 Agent 是厨师长。厨师长把&quot;做一桌菜&quot;拆成&quot;洗菜、切菜、炒菜、摆盘&quot;，分别派给帮厨，最后汇总。帮厨之间不直接沟通，都向厨师长汇报。</li>
+</ol>
+<ol>
+<li><strong>专家各管一块（流水线）</strong>：一个 Agent 只做&quot;切菜&quot;，切完传给下一个&quot;炒菜&quot;的，再传给&quot;摆盘&quot;的。每个 Agent 只关心自己这一步，输入是什么、输出是什么。这种也叫 pipeline 模式。</li>
+</ol>
+<ol>
+<li><strong>互相传递结果（讨论式）</strong>：Agent A 提出方案，Agent B 审查并提意见，Agent A 根据意见修改，再来回几轮。像两个工程师互相 code review。</li>
+</ol>
+<p><strong>核心问题：沟通成本与失控风险。</strong> 人越多开会越乱，Agent 也一样。每个 Agent 之间传消息都要时间，消息格式不一致会解析失败，指令含糊会让 Agent 各自理解不同导致结果对不上。更危险的是&quot;失控&quot;——某个 Agent 跑偏了，主管没发现，后面所有 Agent 都在错误基础上继续干活，最后结果全错。所以设计多 Agent 系统时，<strong>分工边界要清晰、消息格式要固定、要有检查点</strong>。</p>
+<h2>动手任务</h2>
+<p><strong>手机任务（5 分钟）</strong>：拿出一张纸（或手机备忘录），设计一个&quot;多 Agent 写产品说明书&quot;的方案：</p>
+<ul>
+<li>写清楚：需要几个 Agent？各自负责什么？谁是指挥？结果怎么汇总？</li>
+<li>参考答案方向：主管 Agent 拆大纲 → 资料收集 Agent → 文案撰写 Agent → 校对 Agent → 汇总给主管。</li>
+</ul>
+<p><strong>电脑任务（5 分钟，可选）</strong>：如果你电脑上装了任何 AI 编程工具（如 Cursor、Codex CLI），做一个最简单的实验——让一个 Agent 写一段 Python 代码，再让另一个 Agent（或同一工具的另一个会话）审查这段代码的 bug，然后把审查结果传回给第一个 Agent 修改。观察&quot;消息传递&quot;的过程。</p>
+<h2>AI 工具箱</h2>
+<p><strong>主题：Agent 编排的新趋势——&quot;项目大脑&quot;（Project Brain）</strong></p>
+<p><strong>【是什么】</strong> 一种新架构：所有 Agent 共享一个&quot;项目记忆库&quot;（通常是一个结构化的知识图谱），而不是靠互相传消息。每个 Agent 干活前先读这个库，干完把结果写进去。</p>
+<p><strong>【为什么火】</strong> 多 Agent 最大的问题是消息传着传着就乱了、上下文丢了。共享记忆库相当于大家看同一块白板，谁改了什么一目了然，不用来回传话。</p>
+<p><strong>【核心要点】</strong> ① 项目目标、决策、风险、需求都记录在共享库里，任何 Agent 随时可查；② Agent 之间不直接对话，只跟&quot;库&quot;对话，减少沟通成本；③ 人类也能读这个库，随时知道 AI 在想什么、做到哪一步了。相关项目：Compilr.dev Studio（搜索关键词：Compilr.dev Studio project brain）。</p>
+<h2>今日动态</h2>
+<ul>
+<li><strong>Meta 从 Google Chat 全面切换 Slack，用于 AI Agent 协作</strong> —— 说明大厂开始认真对待&quot;Agent 之间怎么沟通&quot;这件事，Slack 的频道结构天然适合 Agent 分工与消息路由。值得关注：未来 Agent 协作可能不再靠代码，而是靠现成的团队协作工具。链接：https://www.businessinsider.com/meta-switching-from-google-chat-slack-for-ai-agents-2026-9</li>
+<li><strong>isometric.nyc：用 coding agents 构建的 NYC 像素地图</strong> —— 作者明确说&quot;一行代码没写&quot;，全程靠多个 Agent 分工完成，是典型的多 Agent 实战案例。链接：https://cannoneyed.com/isometric-nyc/</li>
+</ul>
+<h2>打卡</h2>
+<p>完成标准：能设计一个多 Agent 分工方案（比如&quot;写一份市场分析报告&quot;），说清楚每个 Agent 的职责、谁是主管、消息怎么传、结果怎么汇总，并用大白话讲给另一个人听。</p>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s3m1u16%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s3m1u16%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E5%A4%9A%20Agent%20%E5%8D%8F%E4%BD%9C%EF%BC%9A%E5%88%86%E5%B7%A5%E4%B8%8E%E6%B2%9F%E9%80%9A&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
