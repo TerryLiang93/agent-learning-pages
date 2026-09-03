@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>评估与调试：怎么知道 Agent 好不好</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段三：工程化与进阶</span>
+      <h1>评估与调试：怎么知道 Agent 好不好</h1>
+      <div class="meta">2026-09-03 · 协作与质量 · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>今天学的是怎么判断你做的 Agent 到底行不行。就像焊完一块板子要测电压、看波形一样，Agent 写完也要有测试方法。你会学到三个词：评估集（准备一堆考题）、回归测试（改完代码全考一遍）、日志（看 Agent 干活时的&quot;黑匣子&quot;）。核心就一句话：<strong>不能凭感觉说&quot;好像能用&quot;，要用数据说话</strong>。</p>
+<h2>术语卡片</h2>
+<ul>
+<li><strong>评估集</strong> —— 就像你给 Agent 准备的一摞&quot;考试卷子&quot;。每张卷子是一个任务，提前写好了标准答案或评分标准。以后每次改代码，都拿这摞卷子重新考一遍。</li>
+<li><strong>指标</strong> —— 把&quot;好不好&quot;变成数字。比如：10 道题做对了几道（正确率）、一道题花了多少钱（成本）、答得流不流畅（质量分）。没数字就没法比较。</li>
+<li><strong>回归测试</strong> —— 改完一个 bug，最怕的是把原来好用的功能搞坏了。回归测试就是&quot;把以前的考题全部重跑一遍&quot;，确保新改动没破坏旧功能。就像你换了板子上的电容，得把之前的测试全再做一次。</li>
+</ul>
+<h2>原理精讲</h2>
+<p><strong>为什么不能靠&quot;感觉&quot;？</strong></p>
+<p>假设你让 Agent 帮你写一个 Python 脚本处理日志文件。你试了三次，感觉&quot;挺聪明的&quot;。但第四次它突然卡住了——因为这次的日志格式多了一种你没见过的时间戳。</p>
+<p>问题在于：你的&quot;感觉&quot;来自少数几次成功。你不知道它在 100 次里能成功几次，也不知道哪些场景会翻车。</p>
+<p><strong>评估集就是你的&quot;测试治具&quot;</strong></p>
+<p>做硬件时，你要测一块电源板，会准备不同的负载（10% 负载、50% 负载、满载）。Agent 也一样——你要准备不同类型的任务：</p>
+<ul>
+<li>简单任务：提取日志里的错误信息</li>
+<li>中等任务：把日志按时间排序并去重</li>
+<li>困难任务：根据日志内容自动生成故障分析报告</li>
+</ul>
+<p>每个任务后面写上&quot;什么算对&quot;。可以是精确答案，也可以是一个打分标准（比如&quot;是否包含了错误码和发生时间&quot;）。</p>
+<p><strong>改一次，全考一遍（回归测试）</strong></p>
+<p>你改了一行 prompt，让它回答更简洁。结果发现：简洁是简洁了，但原来会做的数学题现在不做了——因为它把&quot;步骤&quot;也省了。</p>
+<p>没有回归测试，你根本发现不了这个问题。有了它，一跑就知道：数学题挂了 3 道。马上回滚。</p>
+<p><strong>日志：Agent 的飞行记录仪</strong></p>
+<p>飞机上有黑匣子，Agent 也应该有。日志就是记录 Agent 每一步干了什么：它调了什么工具、传了什么参数、返回了什么结果、它自己说了什么&quot;思考过程&quot;。</p>
+<p>遇到问题，不要盯着最终输出猜。打开日志，看它哪一步开始跑偏的——是理解错了需求？还是调工具时参数传错了？还是结果处理不对？就像查硬件故障，先看示波器波形在哪一段失真。</p>
+<h2>动手任务</h2>
+<p><strong>手机任务（5 分钟）</strong></p>
+<p>打开你手机里的备忘录，列出你平时让 AI 助手做的 5 类任务（比如：写周报、翻译、解释概念、写代码片段、总结文章）。每类任务写 1 个具体例子和你认为&quot;算对&quot;的标准。这就是你的第一版&quot;评估集&quot;草稿。不用完美，先有 5 条。</p>
+<p><strong>电脑任务（10 分钟）</strong></p>
+<p>如果你已经有正在开发的 Agent 或自动化脚本：</p>
+<ol>
+<li>建一个 <code>tests/</code> 文件夹，里面放一个 <code>evaluation.md</code> 文件</li>
+<li>写 3 个测试用例，格式如下：</li>
+<pre><code>   ## 用例 1：提取错误日志
+   - 输入：一段包含 3 个 ERROR 和 5 个 INFO 的日志文本
+   - 期望输出：只包含 ERROR 行，且按时间排序
+   - 通过标准：输出中无 INFO 行，ERROR 行数 = 3</code></pre>
+<li>在你的 Agent 主代码里，每个关键步骤加一行 <code>print(f&quot;[STEP] 正在执行: {步骤名}&quot;)</code> 或使用 <code>logging.info()</code></li>
+</ol>
+<p>做完这两件事，你就有了最基础的&quot;评估集 + 日志&quot;。</p>
+<h2>AI 工具箱</h2>
+<p><strong>今日推荐：用&quot;机械检查&quot;给 AI 输出把关 —— 从 consulting-pptx-skill 学到的思路</strong></p>
+<p>【这是什么】GitHub 上一个叫 <code>gozen3ji/consulting-pptx-skill</code> 的项目（⭐63），它的核心思路是：让 AI 做 PPT，但<strong>不信任 AI 的自觉</strong>——生成完后用一套机械规则自动检查结果。</p>
+<p>【有什么用】AI 写代码、写文档、做 PPT，经常&quot;看起来对但细节全错&quot;。手动检查太累，让机器替你查。</p>
+<p>【怎么用】它的做法分三步：</p>
+<ol>
+<li><strong>定规矩</strong>：先把规则写成文件（比如 PPT 必须用 38 种版式之一，标题不能超过 20 字）</li>
+<li><strong>AI 干活</strong>：让 AI 按规矩生成内容</li>
+<li><strong>机械检查</strong>：写一个脚本检查输出是否符合规则（有没有用未定义的版式？字号对不对？），不通过就打回重做</li>
+</ol>
+<p>【实用例子】你可以把这个思路用在日常：让 AI 写代码后，用一个 <code>grep</code> 命令检查有没有把 <code>print()</code> 留在生产代码里；让 AI 写文章后，用一个脚本检查有没有出现&quot;首先、然后、最后&quot;这种废话开头。<strong>规则越具体，机械检查越有效</strong>。这比反复改 prompt 靠谱得多。</p>
+<blockquote>搜索关键词：<code>gozen3ji/consulting-pptx-skill</code></blockquote>
+<h2>今日动态</h2>
+<p><strong>antfu/eslint-plugin-slop（⭐37）</strong> —— ESLint 作者写的插件，专门检查代码里的&quot;AI 痕迹&quot;（比如多余的注释、过度设计的抽象、没用的变量）。说明连大佬都在担心 AI 写代码的质量问题，跟今天学的&quot;评估和检查&quot;是同一个主题。值得关注：https://github.com/antfu/eslint-plugin-slop</p>
+<h2>打卡</h2>
+<p>完成标准：我建了至少 3 条测试用例的评估集；改代码后会跑一遍回归测试；Agent 出问题时我能通过日志说出它在第几步跑偏的。</p>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s3m1u17%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s3m1u17%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E8%AF%84%E4%BC%B0%E4%B8%8E%E8%B0%83%E8%AF%95%EF%BC%9A%E6%80%8E%E4%B9%88%E7%9F%A5%E9%81%93%20Agent%20%E5%A5%BD%E4%B8%8D%E5%A5%BD&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
