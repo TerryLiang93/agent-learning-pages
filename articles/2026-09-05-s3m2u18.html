@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>错误处理与重试：让 Agent 不轻易崩溃</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段三：工程化与进阶</span>
+      <h1>错误处理与重试：让 Agent 不轻易崩溃</h1>
+      <div class="meta">2026-09-05 · 真实落地 · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>今天学的是&quot;让 Agent 不轻易崩溃&quot;。你写程序时，调用外部 API 可能超时、工具可能报错、模型可能返回乱七八糟的内容——这些都是常态。关键不是避免出错，而是出错后程序还能活着，给用户一个合理的交代。这就是<strong>容错</strong>、<strong>重试</strong>、<strong>降级</strong>这套东西要解决的问题。</p>
+<h2>术语卡片</h2>
+<ul>
+<li><strong>重试</strong> —— 事情没办成，再试一次。就像打电话占线，过几秒再拨。</li>
+<li><strong>超时</strong> —— 等太久了，不等了。就像你等外卖，等了 2 小时还没到，你不可能一直等下去，直接取消订单。</li>
+<li><strong>降级</strong> —— 主方案不行了，换备胎方案。就像主路堵死了，走辅路绕过去。</li>
+<li><strong>容错</strong> —— 系统对错误的&quot;容忍能力&quot;。就像人摔了一跤能爬起来接着走，而不是直接躺平。</li>
+</ul>
+<h2>原理精讲</h2>
+<p><strong>为什么 Agent 特别容易崩？</strong> 因为 Agent 不像普通程序只调自己的代码，它要调外部 API、要调工具、要调模型——这些都是&quot;不可控&quot;的。你没法保证对方一定响应、一定正确。</p>
+<p><strong>核心思路就三层：</strong></p>
+<p><strong>第一层：超时控制。</strong> 给每次调用设一个时间上限。比如调天气 API，最多等 5 秒，5 秒没回来就放弃这次调用。没有超时控制，程序可能永远卡在那里等——这叫&quot;死等&quot;，是最低级的错误。</p>
+<p><strong>第二层：重试。</strong> 超时或报错后，别急着放弃，再试几次。但要注意：<strong>不能立刻重试</strong>。如果对方服务器正忙，你立刻再打过去大概率还是忙。所以要&quot;指数退避&quot;——第一次等 1 秒再试，第二次等 2 秒，第三次等 4 秒，越等越久，给对方喘息的时间。同时设个最大次数，比如 3 次，试完还不行就放弃。</p>
+<p><strong>第三层：降级。</strong> 重试也失败了怎么办？不能就这么崩了。要有备选方案。比如：</p>
+<ul>
+<li>调天气 API 失败 → 改用另一个免费天气 API</li>
+<li>两个 API 都失败 → 告诉用户&quot;天气服务暂时不可用，请稍后再试&quot;，而不是抛出一堆错误堆栈</li>
+</ul>
+<p>降级的核心原则：<strong>给用户一个能用的结果，或者一个清楚的交代，而不是崩溃。</strong></p>
+<p><strong>生活化类比：</strong> 你让助手去楼下买咖啡。助手发现那家店关门了（失败），他不会直接回来跟你说&quot;我失败了&quot;然后走人——他会去另一家店买（降级）。如果所有店都关门了，他会回来告诉你&quot;今天楼下所有咖啡店都关门了，我试了 3 家&quot;（如实告知），而不是空手回来一脸懵。</p>
+<h2>动手任务</h2>
+<p><strong>手机任务（5 分钟）：</strong> 回想你最近用过的手机 App——比如外卖软件。当网络不好时，它是不是会显示&quot;加载失败，点击重试&quot;？观察一下：它失败后是立刻让你重试，还是等了一会儿？如果一直失败，它最后显示什么？把观察结果写下来，这就是真实世界里的容错设计。</p>
+<p><strong>电脑任务（5 分钟）：</strong> 如果你已经写过调用 API 的 Agent 代码，检查一下你的代码里有没有这三样东西：</p>
+<ol>
+<li>有没有设超时？（比如 <code>timeout=10</code> 这样的参数）</li>
+<li>有没有重试逻辑？重试之间有没有等待？</li>
+<li>如果最终失败了，程序是抛异常崩溃，还是能优雅地告诉用户&quot;出错了&quot;？</li>
+</ol>
+<p>如果三样都没有，你的 Agent 就是一个&quot;脆皮 Agent&quot;——一碰就碎。至少先加上超时参数，这是最简单的一步。</p>
+<h2>AI 工具箱</h2>
+<p><strong>主题：从&quot;AutoGPT 类 Agent 为什么跑不起来&quot;看 Agent 的容错设计</strong></p>
+<p>【这是什么】最近 HN 上有个讨论叫&quot;Why autonomous agents still can&#x27;t run on their own&quot;（为什么自主 Agent 还是跑不起来），Glassflow 的博客从基础设施角度分析了这个问题。</p>
+<p>【有什么用】它点出了一个关键事实：Agent 跑不起来，很多时候不是模型不够聪明，而是<strong>工程底座不牢</strong>——API 不稳定、工具报错没人处理、状态丢失没人管。这正好呼应今天学的容错。</p>
+<p>【核心要点】一个能&quot;自主运行&quot;的 Agent，至少需要：可靠的执行环境（不是一次性的脚本）、完善的错误恢复机制（出错能重试能回滚）、以及对人来说透明的状态追踪（出问题了知道卡在哪）。很多 Agent 演示时跑得通，一上生产就崩，就是因为只写了&quot;正常路径&quot;的代码，没写&quot;异常路径&quot;的代码。</p>
+<p>【怎么用】写 Agent 时，把 30% 的精力花在&quot;正常流程&quot;上，70% 花在&quot;出错怎么办&quot;上。先想清楚：API 超时怎么办？工具返回格式不对怎么办？模型返回空内容怎么办？把这几个问题答清楚了，你的 Agent 才算&quot;能跑&quot;。</p>
+<p>搜索关键词：autonomous agents infrastructure</p>
+<h2>今日动态</h2>
+<p>今天没有特别相关的动态。（今天素材里最接近的是 Glassflow 那篇&quot;自主 Agent 为什么跑不起来&quot;的讨论，已在上面工具箱里覆盖了。）</p>
+<h2>打卡</h2>
+<p>标准：检查你写的 Agent 代码——如果调用 API 超时或失败，程序不会崩溃，而是会重试（有等待间隔）并在最终失败时给用户一个清楚的提示或备选方案。做到即完成。</p>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s3m2u18%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s3m2u18%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86%E4%B8%8E%E9%87%8D%E8%AF%95%EF%BC%9A%E8%AE%A9%20Agent%20%E4%B8%8D%E8%BD%BB%E6%98%93%E5%B4%A9%E6%BA%83&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
