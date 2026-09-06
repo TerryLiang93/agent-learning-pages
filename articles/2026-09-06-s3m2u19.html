@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>RAG：让 Agent 会&#x27;查资料&#x27;</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段三：工程化与进阶</span>
+      <h1>RAG：让 Agent 会&#x27;查资料&#x27;</h1>
+      <div class="meta">2026-09-06 · 真实落地 · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>今天学 RAG——让 AI 学会“查资料”。你之前用 AI 时它只能凭“记忆”回答，今天之后它能像你查芯片手册一样，先翻文档再回答，还能告诉你答案出自哪一页。这是让 Agent 真正落地到公司内部文档、私有知识库的关键技术。</p>
+<h2>术语卡片</h2>
+<ul>
+<li><strong>RAG</strong> —— 检索增强生成（Retrieval-Augmented Generation）的缩写。大白话：让 AI 先“查资料”再“写答案”，而不是凭空瞎编。</li>
+<li><strong>检索</strong> —— 从一堆文档里快速找出跟问题最相关的几段内容，就像你用 Ctrl+F 搜关键词，但比它聪明——能按“意思相近”来找。</li>
+<li><strong>文档切分</strong> —— 把一大本手册切成很多小块（比如每 500 字一块），方便检索时精准定位到“哪一段”跟问题相关。</li>
+<li><strong>引用</strong> —— AI 回答时标注“我这个答案是根据哪块资料说的”，就像论文写参考文献，让答案可追溯、可验证。</li>
+</ul>
+<h2>原理精讲</h2>
+<p><strong>RAG 解决什么问题？</strong></p>
+<p>你训练好的大模型，知识截止在训练那天。你问它“我们公司最新的 BMS 固件怎么配置”，它根本不知道——因为这是公司的私有资料，网上没有。</p>
+<p>RAG 的思路特别朴素，分三步：</p>
+<ol>
+<li><strong>准备阶段</strong>：把你的文档（PDF、Word、手册）全部切分成小块，每块转成“向量”【术语：向量就是把文字变成一串数字，意思相近的文字数字也接近】，存进数据库。</li>
+<li><strong>检索阶段</strong>：用户问问题 → 把问题也转成向量 → 在数据库里找“意思最接近”的几块内容。</li>
+<li><strong>生成阶段</strong>：把找到的内容 + 用户问题一起塞给大模型 → 模型“看着资料”回答 → 并标注每句话出自哪块资料。</li>
+</ol>
+<p><strong>生活化例子</strong>：想象你是一个刚入职的硬件工程师，老板问你“板子上电没反应怎么排查”。你不会凭经验瞎说，而是先翻开公司《硬件调试手册》，找到“上电无反应”那一章，照着上面的排查步骤回答，还告诉老板“这是手册第 3.2 节写的”。这就是 RAG——先查书，再回答，带出处。</p>
+<p><strong>为什么要切分文档？</strong></p>
+<p>如果不切分，整本手册 200 页一次性塞给模型，有两个问题：一是模型“注意力”有限，看后面忘前面；二是检索时没法精准定位，你问“电源指示灯不亮”，它得翻整本书找。切成小块后，检索能精确命中“电源指示灯”那一小段，又快又准。</p>
+<p><strong>为什么答案要带引用？</strong></p>
+<p>因为 AI 会“一本正经地胡说八道”。带引用后，你能点开出处核对——如果 AI 理解错了原文，你一眼就能发现。这在工程场景尤其重要：AI 说“把 R3 换成 10kΩ”，你得能回去翻 datasheet 确认它没看错。</p>
+<h2>动手任务</h2>
+<p><strong>手机任务（5 分钟）</strong>：打开任意一个支持联网搜索的 AI 助手（如 ChatGPT、Kimi、豆包），问它一个关于“你手头正在用的某款芯片”的最新问题——比如“STM32F103 现在市场价多少？还推荐新设计用吗？”观察它是否主动引用来源链接。如果引用了，点开链接核对内容是否真的支撑它的回答。这个体验就是 RAG 的“检索 + 引用”过程。</p>
+<p><strong>电脑任务（10 分钟）</strong>：跑通一个带引用的 RAG 问答示例。推荐用现成工具，不需要写代码：</p>
+<ol>
+<li>打开浏览器，访问 <strong>Dify</strong>（开源 LLM 应用平台）的云端版：<code>cloud.dify.ai</code>，注册登录（免费额度够用）。</li>
+<li>点击“创建空白应用”→ 选“聊天助手”。</li>
+<li>在左侧“上下文”区域，点击“添加知识库”→ 新建知识库 → 上传一个你手头的 PDF（比如某芯片的 datasheet，或公司某份技术文档）。</li>
+<li>系统会提示“分段设置”，保持默认即可——这就是文档切分，观察一下它默认按多少字符切一块。</li>
+<li>知识库建好后，回到应用，在“提示词编排”里把知识库关联为上下文，然后点右上角“发布”。</li>
+<li>在调试对话框里问一个文档相关的问题，比如“这个芯片的最大工作电压是多少？”——AI 回答后，看回答下方是否有“引用”按钮，点开核对出处。</li>
+</ol>
+<p>能跑通这六步，你就完成了今天的核心目标：会查资料 + 带引用回答。</p>
+<h2>AI 工具箱</h2>
+<p><strong>本周素材精选：agent-skiller —— 可视化搭建 Agent 技能的开源工具</strong></p>
+<p>【这是什么】一个开源的可视化构建器，让你用拖拽方式定义“AI Agent 可以一步步执行的技能（Skill）”。GitHub 上 30 星，刚起步但方向很实用。</p>
+<p>【有什么用】平时我们教 Agent 做事靠写自然语言提示词，复杂流程容易乱。agent-skiller 把流程变成可视化步骤图——先做什么、再做什么、每步用什么工具，一目了然，比纯文字更可控。</p>
+<p>【怎么用】把仓库克隆下来（<code>git clone https://github.com/lattebbrook/agent-skiller</code>），本地启动后，在界面里拖拽创建步骤节点，每个节点填指令，保存后导出成 Agent 能识别的技能文件。</p>
+<p>【实用例子】比如你想让 Agent 帮你“写一份硬件测试报告”：步骤 1 读取测试数据文件 → 步骤 2 按模板生成报告 → 步骤 3 保存为 Markdown。三步拖出来连上线，一个可复用的技能就做好了。以后每次说“帮我写测试报告”，Agent 就按这个流程跑。</p>
+<p>搜索关键词：<code>agent-skiller</code>、<code>AI Agent Skill 可视化</code></p>
+<h2>今日动态</h2>
+<p>今天没有特别相关的动态。</p>
+<h2>打卡</h2>
+<p>今天完成的标准：能跟同事说清 RAG 三步流程（切分 → 检索 → 生成），并在 Dify 上跑通一个带引用的问答示例。</p>
+<hr>
+<h2>本周回顾</h2>
+<p><strong>过去 7 天学习主线</strong>：本周从“基础对话”跨入了“真实落地”——学习了如何给 Agent 配置工具（比如让它能调用计算器、查天气等外部能力），理解了 Agent 的“思考循环”（想一步做一步），并开始接触工程化必备的 API 调用与错误处理。今天学的 RAG 是落地的最后一块拼图：让 Agent 不再只会聊天，而是能基于你的私有文档干活。</p>
+<p><strong>关键收获</strong>：Agent 的强弱不只看模型，更看你怎么“喂”它——给它工具它会做事，给它文档它会查资料，给它流程它会按规矩走。</p>
+<p><strong>本周 AI 动态回顾</strong>：素材里反复出现两个趋势：一是“Agent 记忆”成为热点（如 OKF Agent Memory 项目，用 Git 做持久记忆，把 token 消耗砍掉 80%）；二是“Agent 安全”开始被关注（如 Praesidias 项目做 AI Agent 执行前授权）。这暗示着 Agent 正从“玩具”走向“生产工具”——能记住长期信息、能控制风险，才敢让它干真活。</p>
+<p><strong>下周预告</strong>：进入阶段三的收</p>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s3m2u19%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s3m2u19%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9ARAG%EF%BC%9A%E8%AE%A9%20Agent%20%E4%BC%9A%27%E6%9F%A5%E8%B5%84%E6%96%99%27&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
