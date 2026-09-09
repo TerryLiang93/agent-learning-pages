@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>结业项目（第 1 天）：需求与设计</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif;background:#eef0f4;color:#1f2328;line-height:1.8;-webkit-text-size-adjust:100%}
+.wrap{max-width:720px;margin:0 auto;padding:18px 14px 60px}
+.card{background:#fff;border-radius:18px;padding:30px 26px;box-shadow:0 4px 18px rgba(0,0,0,.06)}
+.hero{background:linear-gradient(135deg,#4f6ef7,#8b5cf6);border-radius:14px;color:#fff;padding:26px 24px;margin-bottom:26px}
+.hero .tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:999px;padding:3px 12px;font-size:13px;margin-bottom:12px}
+.hero h1{font-size:23px;line-height:1.5;font-weight:700}
+.hero .meta{margin-top:10px;font-size:13px;opacity:.9}
+h2{font-size:20px;margin:34px 0 14px;padding-left:12px;border-left:5px solid #4f6ef7}
+h3{font-size:17px;margin:22px 0 10px;color:#333}
+p{margin:10px 0;font-size:16px}
+ul,ol{padding-left:24px;margin:10px 0}
+li{margin:7px 0;font-size:16px}
+blockquote{background:#f0f4ff;border-left:4px solid #4f6ef7;border-radius:8px;padding:12px 16px;margin:14px 0;color:#3a4a6b}
+code{background:#eef1f5;border-radius:6px;padding:2px 7px;font-family:Consolas,"Courier New",monospace;font-size:90%;color:#c7254e}
+pre{background:#f6f8fa;border-radius:10px;padding:14px 16px;overflow-x:auto;margin:12px 0}
+pre code{background:none;color:#24292f;padding:0}
+a{color:#4f6ef7;text-decoration:none;word-break:break-all}
+table{border-collapse:collapse;width:100%;margin:14px 0;font-size:15px}
+th,td{border:1px solid #dfe3ea;padding:8px 10px;text-align:left}
+th{background:#f0f4ff}
+hr{border:none;border-top:1px dashed #d5d9e0;margin:26px 0}
+.footer-note{margin-top:36px;padding-top:18px;border-top:1px dashed #d5d9e0;color:#8a919f;font-size:13px;text-align:center;line-height:2}
+.tip{display:inline-block;background:#fff7e6;border:1px solid #ffe0a3;color:#8a5a00;border-radius:8px;padding:2px 8px;font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="hero">
+      <span class="tag">AI Agent 每日一课 · 阶段三：工程化与进阶</span>
+      <h1>结业项目（第 1 天）：需求与设计</h1>
+      <div class="meta">2026-09-09 · 结业项目 · 预计 30 分钟</div>
+    </div>
+    <h2>今日要点</h2>
+<p>今天是你结业项目的第一天。前面学了那么多工具和技巧，今天要解决一个关键问题：<strong>你到底要做什么</strong>。我们会花 30 分钟把项目从&quot;我有个模糊想法&quot;变成&quot;一张能照着执行的图纸&quot;——包括用户是谁、输入输出是什么、怎么算成功、用到哪些工具、流程怎么走、失败了怎么办。这就像盖房子之前先画图纸，图纸画清楚了，后面施工才不会返工。</p>
+<h2>术语卡片</h2>
+<p><strong>需求分析</strong> —— 就是搞清楚&quot;到底要做个什么东西、给谁用、解决什么问题&quot;。好比你想买冰箱，先想清楚是给家里用还是给饭店用、要保鲜还是冷冻、预算多少，而不是直接冲去商场看哪个顺眼。</p>
+<p><strong>设计文档</strong> —— 把你想好的方案用文字和图画写下来，让别人（包括未来的你自己）一看就明白&quot;这东西怎么工作&quot;。就像做菜之前写的菜谱，材料多少、先放什么后放什么、火候多大，全写清楚。</p>
+<h2>原理精讲</h2>
+<h3>为什么先做需求和设计？</h3>
+<p>你以前写代码可能习惯&quot;想到哪写到哪&quot;。小工具没问题，但结业项目是一个完整的 Agent，涉及多个环节（调用模型、处理输入、存记忆、处理错误），不画图直接开写，大概率会陷入&quot;改一处坏两处&quot;的泥潭。</p>
+<p><strong>需求分析</strong>的核心是三件事：</p>
+<ol>
+<li><strong>目标用户</strong>：谁会用你这个 Agent？是你自己，还是你同事？这决定了&quot;好用&quot;的标准。给自己用的，功能糙一点没关系，能省时间就行；给别人用的，就要考虑别人不会用、不爱用的情况。</li>
+<li><strong>输入与输出</strong>：用户给这个 Agent 什么？它返回什么？比如你要做一个&quot;自动整理硬件测试报告&quot;的 Agent，输入是一堆 Excel 原始数据，输出是一份 Word 格式的报告。边界画清楚，才不会做着做着跑偏。</li>
+<li><strong>成功标准</strong>：怎么算&quot;做完了&quot;？必须可测量。比如&quot;能把 10 份测试报告在 5 分钟内整理完，格式无错误&quot;——这就是可测的。如果写&quot;让报告整理更高效&quot;，那永远做不完。</li>
+</ol>
+<p><strong>设计文档</strong>的核心是四个模块：</p>
+<ul>
+<li><strong>工具</strong>：你打算调用哪些现成的工具？比如用 Claude 的 API 做文本处理，用 Python 读 Excel，用某个库生成图表。画出来，不要放在脑子里。</li>
+<li><strong>循环流程</strong>：Agent 的主循环是什么？拿&quot;整理测试报告&quot;举例：读文件 → 提取关键参数 → 生成图表 → 写入 Word 模板 → 输出。每一步画出来，后面写代码就是照着填空。</li>
+<li><strong>记忆方案</strong>：这个 Agent 需要记住什么？比如用户上次用的模板偏好、哪些测试项经常变化。需要存的话，是存在本地文件还是数据库？</li>
+<li><strong>失败处理</strong>：哪一步最容易出错？Excel 格式不对怎么办？网络断了怎么办？至少想清楚&quot;报错提示用户&quot;这一步。</li>
+</ul>
+<h3>生活化例子</h3>
+<p>想象你要做一个&quot;自动提醒交房租&quot;的 Agent。需求分析就是：用户是你自己，输入是每月工资到账短信，输出是&quot;提醒你转账并记账&quot;。成功标准是&quot;每月 1 号收到短信后 5 分钟内提醒，连续 3 个月不漏&quot;。设计文档就是：用短信转发工具接收入账通知 → 用 Python 脚本判断日期 → 调用提醒 App 推送 → 如果没收到短信，当天下午再推一次。就这么简单。</p>
+<h2>动手任务</h2>
+<h3>手机任务（5 分钟）</h3>
+<p>打开手机备忘录，写下三个你工作中反复做、耗时且讨厌的事情。每件事用三句话描述：</p>
+<ol>
+<li>我每次都要做什么？</li>
+<li>输入是什么（数据/文件/消息）？</li>
+<li>输出是什么（报告/邮件/表格）？</li>
+</ol>
+<p>写完后，选一个最让你头疼的，作为你的结业项目选题。</p>
+<h3>手机任务（5 分钟）</h3>
+<p>针对你选的题目，在备忘录里回答四个问题：</p>
+<ol>
+<li>目标用户是谁？（大概率是你自己）</li>
+<li>输入是什么？给一个具体例子（比如&quot;每周五的测试数据 Excel，大概 50 行&quot;）</li>
+<li>输出是什么？给一个具体例子（比如&quot;一封包含关键指标对比的邮件&quot;）</li>
+<li>怎么算成功？写一个可测量的标准（比如&quot;从给出输入到收到输出不超过 3 分钟，数据无错漏&quot;）</li>
+</ol>
+<p>写不出来或者觉得模糊，说明题目选大了，回去缩小范围。</p>
+<h2>AI 工具箱</h2>
+<p><strong>主题：用 &quot;提示词即产品&quot; 的思路——从 refund-anything-ai-prompt 学到的结构化 Prompt 设计</strong></p>
+<p>【这是什么】GitHub 上一个开源项目（⭐47），作者写了一套 AI Prompt，专门用来帮你写&quot;退款请求信&quot;——订阅费、数字产品、酒店预订都能用。搜索关键词：refund-anything-ai-prompt。</p>
+<p>【有什么用】它演示了一个关键技能：<strong>把一件复杂的事情拆成不同阶段，每个阶段用不同的 Prompt 和策略</strong>。不是一句话让 AI&quot;帮我退款&quot;，而是先写礼貌信，不行再升级到法律条款引用，还分 30 多个司法管辖区。</p>
+<p>【怎么用】对照你自己的项目，你的 Agent 主流程也可以这样分层：第一层先做最简单的处理，失败就进入第二层更复杂的逻辑。比如你的报告整理 Agent：先尝试自动解析 Excel，格式不对就调用 AI 用自然语言理解，还不行就明确告诉用户&quot;哪个单元格有问题&quot;。</p>
+<p>【实用例子】你在设计文档的&quot;失败处理&quot;部分，可以画一个三层漏斗：正常流程 → AI 兜底 → 人工提示。每一层用不同的工具和策略，不要一个 Prompt 想解决所有问题。</p>
+<h2>今日动态</h2>
+<p><strong>Hacker News：Show HN - 用 $1,600 的 ESP32 替换了 $120,000 的保龄球馆控制系统</strong>（https://news.heycommunity.com/item?id=48968606）</p>
+<p>一个工程师盘下了一个废弃保龄球馆，发现原来的计分和控制系统要 12 万美元，他自己用 ESP32 单片机 + 自己写代码，花了 1600 美元搞定。值得关注的原因：它和你的结业项目思路完全一致——<strong>先用需求分析搞清楚&quot;到底需要哪些功能&quot;，再选最便宜好用的工具组合实现</strong>。他肯定没想过要做一个&quot;完美的保龄球系统&quot;，只做了真正需要的部分。</p>
+<h2>打卡</h2>
+<p><strong>今天完成的标志</strong>：在备忘录里写下了一句话项目描述（给谁用、输入什么、输出什么），一个可测量的成功标准，以及设计文档草稿（工具、流程、记忆、失败处理四个模块各有一句话）。</p>
+    <hr>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s3m3u21%20%E7%90%86%E8%AE%BA&amp;body=%EF%BC%88%E4%BB%8A%E5%A4%A9%E5%AD%A6%E5%AE%8C%E4%BA%86%E7%90%86%E8%AE%BA/%E6%A6%82%E5%BF%B5%E9%83%A8%E5%88%86%EF%BC%89" target="_blank" rel="noopener">点这里打卡：学完理论/概念</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%5B%E6%89%93%E5%8D%A1%5D%20s3m3u21%20%E4%BB%BB%E5%8A%A1&amp;body=%E6%88%91%E7%9A%84%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%EF%BC%9A%0A%0A%EF%BC%88%E6%8A%8A%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E6%88%96%E5%BF%83%E5%BE%97%E7%B2%98%E8%B4%B4%E5%88%B0%E8%BF%99%E9%87%8C%EF%BC%89" target="_blank" rel="noopener">点这里打卡：完成动手任务</a></p>
+<p><a href="https://github.com/TerryLiang93/agent-learning/issues/new?title=%E6%8F%90%E9%97%AE%EF%BC%9A%E7%BB%93%E4%B8%9A%E9%A1%B9%E7%9B%AE%EF%BC%88%E7%AC%AC%201%20%E5%A4%A9%EF%BC%89%EF%BC%9A%E9%9C%80%E6%B1%82%E4%B8%8E%E8%AE%BE%E8%AE%A1&amp;body=%EF%BC%88%E5%86%99%E4%B8%8B%E4%BD%A0%E4%B8%8D%E6%87%82%E7%9A%84%E5%9C%B0%E6%96%B9%EF%BC%8C%E6%88%96%E4%BD%A0%E7%9A%84%E5%8F%8D%E9%A6%88%EF%BC%9B%E6%88%91%E4%BC%9A%E7%94%A8%E5%A4%A7%E7%99%BD%E8%AF%9D%E5%9B%9E%E7%AD%94%E4%BD%A0%EF%BC%89" target="_blank" rel="noopener">点这里提问</a></p>
+<p>（打卡与提问需要 GitHub 账号，点击后用手机浏览器登录即可）</p>
+    <div class="footer-note">本文由 AI 生成，仅供学习交流 · 每天 08:00 自动推送</div>
+  </div>
+</div>
+</body>
+</html>
